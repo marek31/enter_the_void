@@ -19,13 +19,16 @@ echo "enter_void installer - $HOSTNAME - log: $LOG"
 [[ -d /sys/firmware/efi ]] || die "not booted in UEFI mode - enable EFI in the VM/BIOS settings and boot the live ISO again"
 ping -c1 -W5 repo-default.voidlinux.org >/dev/null || die "no network (wifi: wpa_supplicant/nmtui, then retry)"
 
-lsblk -dpno NAME,SIZE,MODEL | grep -v '^/dev/loop'
-[[ -n $DISK ]] || read -rp "Target disk (e.g. /dev/nvme0n1): " DISK
-[[ -b $DISK ]] || die "$DISK is not a block device"
-# Refuses the disk of a running system (or the live USB): run install.sh from the live ISO.
-if lsblk -nrpo MOUNTPOINT "$DISK" | grep -q .; then
-    die "$DISK has mounted partitions (running system or live USB) - boot the Void live ISO and pick the internal disk"
-fi
+# Candidates: writable whole disks with nothing mounted, so neither the running system nor the live USB/CD.
+mapfile -t DISKS < <(lsblk -dnpo NAME,TYPE,RO | awk '$2 == "disk" && $3 == 0 {print $1}' |
+    while read -r d; do lsblk -nrpo MOUNTPOINT "$d" | grep -q . || echo "$d"; done)
+[[ ${#DISKS[@]} -gt 0 ]] || die "no usable disk (disks with mounted partitions are skipped - run this from the live ISO)"
+lsblk -dpno NAME,SIZE,MODEL "${DISKS[@]}"
+until printf '%s\n' "${DISKS[@]}" | grep -qxF -- "$DISK"; do
+    [[ -n $DISK ]] && printf '\e[1;33m!! %s is not one of the disks listed above\e[0m\n' "$DISK"
+    read -rp "Target disk [${DISKS[0]}]: " DISK
+    DISK=${DISK:-${DISKS[0]}}
+done
 read -rp "EVERYTHING on $DISK will be destroyed. Type the disk path again to confirm: " confirm
 [[ $confirm == "$DISK" ]] || die "aborted, nothing changed"
 

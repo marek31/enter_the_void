@@ -43,6 +43,9 @@
 - The GitHub API allows 60 unauthenticated requests per hour; `setup.sh apps` uses about 5.
 - `nft -c` validates the ruleset at setup time; after hand edits run `sudo nft -c -f /etc/nftables.conf` before restarting.
 - Dotfiles are copied only when missing. To take a new repo version, delete your file and rerun `setup.sh desktop`.
+- VMs: firmware must be UEFI (VirtualBox: System > Enable EFI; Hyper-V: Generation 2 with Secure Boot off; virt-manager: choose UEFI before creating the VM, it can't be changed later) and 3D acceleration on, or niri has no GPU to render with.
+- install.sh refuses any disk with a mounted partition, so it can't wipe the system it runs on; it must run from the live ISO.
+- `exec > >(tee ...)` is asynchronous: without the EXIT trap that closes stdout and waits for tee, messages show up after the shell prompt.
 - `sv` commands do nothing inside the chroot; services are enabled by symlinks in `/etc/runit/runsvdir/default`.
 
 ## Current functionality
@@ -51,3 +54,4 @@ setup.sh steps: base (host, tz, locale, console), packages, user (groups, sudo, 
 
 ## Changelog
 - 2026-10-14: first version.
+- 2026-10-14: install.sh refuses disks with mounted partitions; log output flushed before exit; clearer UEFI error (first VM test).

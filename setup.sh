@@ -16,6 +16,8 @@ die() { printf '\e[1;31m!! %s\e[0m\n' "$*" >&2; exit 1; }
 mkdir -p /var/log/enter_void
 LOG=/var/log/enter_void/$(date +%F_%H-%M-%S)-setup.log
 exec > >(tee -a "$LOG") 2>&1
+TEE_PID=$!
+trap 'exec >&- 2>&-; wait "$TEE_PID"' EXIT   # flush the log before the shell prompt returns
 
 # put <mode> <dest> < content: atomic write, skipped if unchanged, old version backed up to /root/.backup
 put() {

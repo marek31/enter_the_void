@@ -8,6 +8,7 @@ No flatpak, no snap. All decisions are listed (and editable) in [config.sh](conf
 
 1. Write the Void live image (x86_64, **glibc**, base) to a USB stick: <https://voidlinux.org/download/>
 2. BIOS (F1): disable Secure Boot, keep UEFI on. Boot the stick (F12).
+   In a VM: UEFI firmware (VirtualBox: System > Enable EFI; Hyper-V: Generation 2, Secure Boot off) and 3D acceleration on.
 3. Log in as `root` / `voidlinux` and get online. USB ethernet just works. For wifi, find the interface with `ip link` (AX211 is usually `wlp0s20f3`), then
    `wpa_passphrase SSID PASS > /etc/wpa.conf; wpa_supplicant -B -i wlp0s20f3 -c /etc/wpa.conf; dhcpcd wlp0s20f3`. Then:
 

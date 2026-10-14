@@ -8,18 +8,24 @@ source "$HERE/config.sh"
 
 LOG=/tmp/$(date +%F_%H-%M-%S)-void-install.log
 exec > >(tee -a "$LOG") 2>&1
+TEE_PID=$!
+trap 'exec >&- 2>&-; wait "$TEE_PID"' EXIT   # flush the log before the shell prompt returns
 log() { printf '\e[1;34m==> %s\e[0m\n' "$*"; }
 die() { printf '\e[1;31m!! %s\e[0m\n' "$*" >&2; exit 1; }
 part() { [[ $DISK =~ [0-9]$ ]] && echo "${DISK}p$1" || echo "${DISK}$1"; }
 
 echo "enter_void installer - $HOSTNAME - log: $LOG"
 [[ $EUID -eq 0 ]] || die "run as root"
-[[ -d /sys/firmware/efi ]] || die "boot the ISO in UEFI mode"
+[[ -d /sys/firmware/efi ]] || die "not booted in UEFI mode - enable EFI in the VM/BIOS settings and boot the live ISO again"
 ping -c1 -W5 repo-default.voidlinux.org >/dev/null || die "no network (wifi: wpa_supplicant/nmtui, then retry)"
 
 lsblk -dpno NAME,SIZE,MODEL | grep -v '^/dev/loop'
 [[ -n $DISK ]] || read -rp "Target disk (e.g. /dev/nvme0n1): " DISK
 [[ -b $DISK ]] || die "$DISK is not a block device"
+# Refuses the disk of a running system (or the live USB): run install.sh from the live ISO.
+if lsblk -nrpo MOUNTPOINT "$DISK" | grep -q .; then
+    die "$DISK has mounted partitions (running system or live USB) - boot the Void live ISO and pick the internal disk"
+fi
 read -rp "EVERYTHING on $DISK will be destroyed. Type the disk path again to confirm: " confirm
 [[ $confirm == "$DISK" ]] || die "aborted, nothing changed"
 

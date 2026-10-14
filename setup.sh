@@ -135,6 +135,7 @@ step_security() {
     put 644 /etc/sysctl.d/90-hardening.conf < "$FILES/sysctl-hardening.conf"
     printf '* hard core 0\n' | put 644 /etc/security/limits.d/90-nocore.conf
     setkv /etc/default/apparmor APPARMOR enforce
+    setkv /etc/default/grub GRUB_DISABLE_OS_PROBER false   # Windows Boot Manager in the grub menu (dual boot)
     cmdline_set apparmor 1
     cmdline_set security apparmor
     cmdline_set zswap.enabled 0          # swap is a plain swapfile, no RAM compression

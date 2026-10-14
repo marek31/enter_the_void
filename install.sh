@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Stage 1 - run as root from the Void live ISO (x86_64 glibc, booted in UEFI mode).
-# Wipes $DISK, creates the LUKS + btrfs layout, bootstraps Void, then runs setup.sh in a chroot.
+# Mode "free": new partition in the largest unallocated area + the existing EFI partition (dual boot,
+# Windows untouched). Mode "wipe": whole disk. Then LUKS + btrfs, bootstrap, setup.sh in a chroot.
 set -euo pipefail
 HERE=$(cd "$(dirname "$0")" && pwd)
 # shellcheck source=config.sh
@@ -13,6 +14,16 @@ trap 'exec >&- 2>&-; wait "$TEE_PID"' EXIT   # flush the log before the shell pr
 log() { printf '\e[1;34m==> %s\e[0m\n' "$*"; }
 die() { printf '\e[1;31m!! %s\e[0m\n' "$*" >&2; exit 1; }
 part() { [[ $DISK =~ [0-9]$ ]] && echo "${DISK}p$1" || echo "${DISK}$1"; }
+ESP_TYPE=c12a7328-f81f-11d2-ba4b-00a0c93ec93b
+# free_areas: "bytes disk start end" for each unallocated area >= MIN_FREE_GIB, largest first
+free_areas() {
+    local d ss
+    for d in "${DISKS[@]}"; do
+        ss=$(blockdev --getss "$d")
+        sfdisk -F "$d" 2>/dev/null | awk -v d="$d" -v ss="$ss" -v min="$MIN_FREE_GIB" \
+            '$1 ~ /^[0-9]+$/ && $2 ~ /^[0-9]+$/ && $3 ~ /^[0-9]+$/ && $3 * ss >= min * 2^30 {printf "%.0f %s %s %s\n", $3 * ss, d, $1, $2}'
+    done | sort -rn
+}
 
 echo "enter_void installer - $HOSTNAME - log: $LOG"
 [[ $EUID -eq 0 ]] || die "run as root"
@@ -23,14 +34,43 @@ ping -c1 -W5 repo-default.voidlinux.org >/dev/null || die "no network (wifi: wpa
 mapfile -t DISKS < <(lsblk -dnpo NAME,TYPE,RO | awk '$2 == "disk" && $3 == 0 {print $1}' |
     while read -r d; do lsblk -nrpo MOUNTPOINT "$d" | grep -q . || echo "$d"; done)
 [[ ${#DISKS[@]} -gt 0 ]] || die "no usable disk (disks with mounted partitions are skipped - run this from the live ISO)"
-lsblk -dpno NAME,SIZE,MODEL "${DISKS[@]}"
-until printf '%s\n' "${DISKS[@]}" | grep -qxF -- "$DISK"; do
-    [[ -n $DISK ]] && printf '\e[1;33m!! %s is not one of the disks listed above\e[0m\n' "$DISK"
-    read -rp "Target disk [${DISKS[0]}]: " DISK
-    DISK=${DISK:-${DISKS[0]}}
-done
-read -rp "EVERYTHING on $DISK will be destroyed. Type the disk path again to confirm: " confirm
-[[ $confirm == "$DISK" ]] || die "aborted, nothing changed"
+lsblk -po NAME,SIZE,FSTYPE,LABEL,PARTLABEL "${DISKS[@]}"
+FREE=$(free_areas | head -n1)
+if [[ -z $INSTALL_MODE ]]; then
+    echo
+    default=wipe
+    if [[ -n $FREE ]]; then
+        default=free
+        read -r fbytes fdisk _ _ <<< "$FREE"
+        echo "  free  new partition in the $((fbytes >> 30)) GiB of unallocated space on $fdisk - other partitions untouched (dual boot)"
+    fi
+    echo "  wipe  erase one whole disk"
+    read -rp "Install mode [$default]: " INSTALL_MODE
+    INSTALL_MODE=${INSTALL_MODE:-$default}
+fi
+
+case $INSTALL_MODE in
+free)
+    [[ -n $FREE ]] || die "no unallocated area of at least $MIN_FREE_GIB GiB - shrink a partition in Windows Disk Management first"
+    read -r fbytes DISK START END <<< "$FREE"
+    ESP=$(lsblk -lnpo NAME,PARTTYPE "$DISK" | awk -v t="$ESP_TYPE" 'tolower($2) == t {print $1; exit}')
+    [[ -n $ESP ]] || die "no EFI system partition on $DISK to share - use wipe mode or create one"
+    echo "Void gets a new $((fbytes >> 30)) GiB partition in the free space on $DISK."
+    echo "The EFI partition $ESP is shared (grub is added next to Windows Boot Manager, nothing is formatted)."
+    read -rp "Type yes to continue: " confirm
+    [[ $confirm == yes ]] || die "aborted, nothing changed"
+    ;;
+wipe)
+    until printf '%s\n' "${DISKS[@]}" | grep -qxF -- "$DISK"; do
+        [[ -n $DISK ]] && printf '\e[1;33m!! %s is not one of the disks listed above\e[0m\n' "$DISK"
+        read -rp "Target disk [${DISKS[0]}]: " DISK
+        DISK=${DISK:-${DISKS[0]}}
+    done
+    read -rp "EVERYTHING on $DISK will be destroyed. Type the disk path again to confirm: " confirm
+    [[ $confirm == "$DISK" ]] || die "aborted, nothing changed"
+    ;;
+*) die "INSTALL_MODE must be free or wipe, not '$INSTALL_MODE'" ;;
+esac
 
 if [[ $ENCRYPT == yes ]]; then
     read -rsp "Disk encryption passphrase: " PASS; echo
@@ -42,16 +82,28 @@ log "updating xbps on the live system"
 xbps-install -Syu -R "$REPO" xbps
 xbps-install -Sy -R "$REPO" btrfs-progs cryptsetup dosfstools util-linux
 
-log "partitioning $DISK"
-ESP=$(part 1); ROOT=$(part 2)
-wipefs -af "$DISK"
-sfdisk -q "$DISK" <<EOF
+if [[ $INSTALL_MODE == wipe ]]; then
+    log "partitioning $DISK"
+    ESP=$(part 1); ROOT=$(part 2)
+    wipefs -af "$DISK"
+    sfdisk -q "$DISK" <<EOF
 label: gpt
 size=${ESP_MIB}MiB, type=uefi, name=EFI
 type=linux, name=void
 EOF
-udevadm settle
-mkfs.vfat -F32 -n EFI "$ESP"
+    udevadm settle
+    mkfs.vfat -F32 -n EFI "$ESP"
+else
+    log "adding the Void partition in the free space on $DISK"
+    START=$(( (START + 2047) / 2048 * 2048 ))   # 1 MiB alignment
+    SIZE=$(( (END - START + 1) / 2048 * 2048 ))
+    before=$(lsblk -lnpo NAME "$DISK" | sort)
+    echo "start=$START, size=$SIZE, type=linux, name=void" | sfdisk -q --append "$DISK"
+    udevadm settle
+    ROOT=$(comm -13 <(echo "$before") <(lsblk -lnpo NAME "$DISK" | sort))
+    [[ -b $ROOT ]] || die "could not find the new partition on $DISK"
+    log "new partition: $ROOT"
+fi
 
 if [[ $ENCRYPT == yes ]]; then
     log "encrypting $ROOT (LUKS1 so grub can unlock /boot)"
@@ -79,6 +131,7 @@ done
 # /btrfsroot stays an empty mount point: snapper-rollback mounts the top level there only while rolling back.
 mkdir -p /mnt/btrfsroot /mnt/boot/efi
 mount "$ESP" /mnt/boot/efi
+(( $(df --output=avail -m /mnt/boot/efi | tail -n1) >= 16 )) || die "EFI partition $ESP has less than 16 MB free for grub"
 chmod 1777 /mnt/var/tmp
 
 log "bootstrapping Void"
@@ -114,6 +167,7 @@ if [[ $ENCRYPT == yes ]]; then
 fi
 sed -i "s|^GRUB_CMDLINE_LINUX_DEFAULT=.*|GRUB_CMDLINE_LINUX_DEFAULT=\"$CMDLINE\"|" /mnt/etc/default/grub
 sed -i 's/^#\?GRUB_TIMEOUT=.*/GRUB_TIMEOUT=2/' /mnt/etc/default/grub   # menu (and snapshots) still reachable
+echo 'GRUB_DISABLE_OS_PROBER=false' >> /mnt/etc/default/grub            # Windows Boot Manager in the grub menu
 echo 'hostonly="yes"' > /mnt/etc/dracut.conf.d/00-hostonly.conf
 
 log "entering chroot"

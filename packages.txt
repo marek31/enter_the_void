@@ -5,7 +5,7 @@
 # --- base, boot, filesystem ---
 base-system void-repo-nonfree linux linux-firmware sof-firmware
 grub-x86_64-efi efibootmgr cryptsetup btrfs-progs compsize dracut
-snapper snapper-rollback python3-btrfsutil grub-btrfs inotify-tools
+snapper snapper-rollback python3-btrfsutil grub-btrfs inotify-tools os-prober
 chrony socklog-void cronie terminus-font
 
 # --- session: niri on Wayland, greetd login ---

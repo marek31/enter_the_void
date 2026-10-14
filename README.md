@@ -22,6 +22,18 @@ vi config.sh          # optional: disk, swap size, scale, ...
 
 4. Reboot. grub asks for the disk passphrase once, tuigreet starts niri.
 
+### Dual boot on the X1 (Windows stays)
+
+Checked on 2026-10-14: GPT disk with **97.1 GB unallocated** between C: and the Recovery partition, Secure Boot off,
+BitLocker off on C:, Fast Startup off. install.sh offers mode `free` there: it creates one partition in that gap,
+shares the 260 MB EFI partition (adds `EFI\Void` next to `EFI\Microsoft`, formats nothing) and puts Windows in the grub menu.
+
+Before installing, in an **admin** PowerShell on Windows (keeps the clock right when switching OSes, both then use UTC):
+```powershell
+reg add "HKLM\SYSTEM\CurrentControlSet\Control\TimeZoneInformation" /v RealTimeIsUniversal /t REG_DWORD /d 1 /f
+```
+If Windows ever boots straight to itself after an update, pick Void with F12 or move it first in BIOS > Startup > Boot.
+
 ## First login
 
 | What | How |

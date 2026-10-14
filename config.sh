@@ -5,7 +5,9 @@
 #   distro      Void Linux x86_64 glibc, runit, no flatpak/snap/AppImage-runtime
 #   target      ThinkPad X1 Carbon Gen 10 (21CC): i5-1250P, Iris Xe, 16 GB, 512 GB NVMe, 2560x1440,
 #               AX211 wifi, SOF audio, Synaptics 06cb:00fc fingerprint reader, USB4/Thunderbolt
-#   disk        GPT: 1 GiB EFI + LUKS1 (grub can unlock it) holding btrfs; no swap partition
+#   disk        X1: dual boot - Void goes into the 97 GiB unallocated between C: and Windows Recovery,
+#               sharing Windows' 260 MB EFI partition (grub next to Windows Boot Manager, os-prober menu).
+#               VM/blank disk: GPT, 1 GiB EFI + rest. Either way LUKS1 (grub can unlock it) + btrfs
 #   swap        plain swapfile on disk (@swap subvolume, inside LUKS); no zram, zswap disabled
 #   btrfs       @ / @home / @snapshots / @var_log / @var_cache / @var_tmp / @swap, /tmp is tmpfs
 #   snapshots   snapper, root + home every 15 min; caches, logs, temp, swap, snapshots are separate
@@ -39,7 +41,10 @@ CONSOLE_FONT=ter-v24n   # readable on the 2560x1440 14" panel
 XKB_LAYOUT=pl           # "pl" basic variant == Polish (programmer's)
 DISPLAY_SCALE=1.25      # eDP-1 in niri; 1.0-1.5 are sane on this panel
 
-DISK=""                 # e.g. /dev/nvme0n1; empty = install.sh asks
+INSTALL_MODE=""         # free = new partition in the largest unallocated area, keep Windows (dual boot)
+                        # wipe = erase a whole disk; empty = install.sh asks (default free if there is space)
+MIN_FREE_GIB=40         # smallest unallocated area offered for "free"
+DISK=""                 # wipe mode only, e.g. /dev/nvme0n1; empty = install.sh asks
 ENCRYPT=yes             # yes = LUKS1 full disk encryption, no = plain btrfs
 LUKS_ITER_MS=500        # passphrase stretching, measured at Linux speed; grub is several times slower.
                         # cryptsetup default 2000 = long wait at grub. Lower = faster boot but cheaper

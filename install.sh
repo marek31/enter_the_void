@@ -55,7 +55,7 @@ mkfs.vfat -F32 -n EFI "$ESP"
 
 if [[ $ENCRYPT == yes ]]; then
     log "encrypting $ROOT (LUKS1 so grub can unlock /boot)"
-    printf '%s' "$PASS" | cryptsetup luksFormat --type luks1 -q --key-file=- "$ROOT"
+    printf '%s' "$PASS" | cryptsetup luksFormat --type luks1 --iter-time "$LUKS_ITER_MS" -q --key-file=- "$ROOT"
     printf '%s' "$PASS" | cryptsetup open --allow-discards --key-file=- "$ROOT" cryptroot
     DEV=/dev/mapper/cryptroot
 else
@@ -105,13 +105,15 @@ if [[ $ENCRYPT == yes ]]; then
     LUKS_UUID=$(blkid -s UUID -o value "$ROOT")
     dd bs=512 count=4 if=/dev/urandom of=/mnt/boot/cryptroot.key iflag=fullblock status=none
     chmod 000 /mnt/boot/cryptroot.key
-    cryptsetup luksAddKey --key-file=<(printf '%s' "$PASS") "$ROOT" /mnt/boot/cryptroot.key
+    # The keyfile is 2 KiB of random data, so stretching adds nothing: minimum iterations = instant unlock in the initramfs.
+    cryptsetup luksAddKey --pbkdf-force-iterations 1000 --key-file=<(printf '%s' "$PASS") "$ROOT" /mnt/boot/cryptroot.key
     echo "cryptroot UUID=$LUKS_UUID /boot/cryptroot.key luks,discard" > /mnt/etc/crypttab
     echo 'install_items+=" /boot/cryptroot.key /etc/crypttab "' > /mnt/etc/dracut.conf.d/10-crypt.conf
     echo 'GRUB_ENABLE_CRYPTODISK=y' >> /mnt/etc/default/grub
     CMDLINE+=" rd.luks.uuid=$LUKS_UUID rd.luks.allow-discards"
 fi
 sed -i "s|^GRUB_CMDLINE_LINUX_DEFAULT=.*|GRUB_CMDLINE_LINUX_DEFAULT=\"$CMDLINE\"|" /mnt/etc/default/grub
+sed -i 's/^#\?GRUB_TIMEOUT=.*/GRUB_TIMEOUT=2/' /mnt/etc/default/grub   # menu (and snapshots) still reachable
 echo 'hostonly="yes"' > /mnt/etc/dracut.conf.d/00-hostonly.conf
 
 log "entering chroot"

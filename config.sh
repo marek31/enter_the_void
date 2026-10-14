@@ -41,6 +41,9 @@ DISPLAY_SCALE=1.25      # eDP-1 in niri; 1.0-1.5 are sane on this panel
 
 DISK=""                 # e.g. /dev/nvme0n1; empty = install.sh asks
 ENCRYPT=yes             # yes = LUKS1 full disk encryption, no = plain btrfs
+LUKS_ITER_MS=500        # passphrase stretching, measured at Linux speed; grub is several times slower.
+                        # cryptsetup default 2000 = long wait at grub. Lower = faster boot but cheaper
+                        # brute force, so use a long passphrase (4-5 random words).
 ESP_MIB=1024
 SWAP_GIB=16             # = RAM
 BTRFS_OPTS="noatime,compress=zstd:1"

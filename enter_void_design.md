@@ -48,7 +48,7 @@
 - `hunspell-pl_PL`, `font-jetbrains-mono`, `adw-gtk3`, `mission-center`, `rustdesk` don't exist in the Void repos (checked 2026-10-14).
 
 ## Known gotchas
-- grub unlocking LUKS1 takes about 10-20 s after the passphrase. That's normal.
+- grub runs PBKDF2 several times slower than the kernel, so the unlock wait scales with `LUKS_ITER_MS` (cryptsetup default 2000 ms = 10-30 s at grub, worse in a VM). Default here is 500 ms, which needs a long passphrase. The keyfile slot uses the minimum 1000 iterations (random 2 KiB key, stretching adds nothing). Existing disks: `cryptsetup luksChangeKey --iter-time 500 /dev/sda2` (type the same passphrase twice).
 - Booting a snapshot from grub gives a read-only `/`. Use it to inspect, then `snapper-rollback N` + reboot.
 - The GitHub API allows 60 unauthenticated requests per hour; `setup.sh apps` uses about 5.
 - `nft -c` validates the ruleset at setup time; after hand edits run `sudo nft -c -f /etc/nftables.conf` before restarting.
@@ -70,3 +70,4 @@ setup.sh steps: base (host, tz, locale, console), packages, user (groups, sudo, 
 - 2026-10-14: disk picker lists only usable disks; zswap disabled (swap = plain swapfile only).
 - 2026-10-14: bluetooth audio (libspa-bluetooth: SBC/AAC/aptX/LDAC/LC3, wireplumber-elogind, blueman, battery levels, btusb kept out of TLP autosuspend); printers: network IPP queues auto-created (cups-browsed `CreateIPPPrinterQueues All`), ipp-usb service enabled, USB printers auto-added (system-config-printer-udev), user in lpadmin; qpwgraph + Mod+A mixer.
 - 2026-10-14: review fixes: Helium uses libsecret + VA-API; keyring registered on the session bus; /btrfsroot no longer mounted; auto-updates + update notices; earlyoom, udiskie, smartd, monthly scrub, updatedb pruning, snapper FREE_LIMIT; hibernation + battery-guard; turbo boost on battery; alsa-ucm-conf; default apps; keepassxc, restic, rclone; cliphist removed. Minimal look with one Noctalia palette (Kanagawa) everywhere, Bibata cursor, Great Wave wallpaper, starship prompt. Dev tools: rustup, Claude Code, Antigravity CLI, oh-my-pi.
+- 2026-10-14: faster boot: LUKS_ITER_MS=500 for the passphrase slot, minimum iterations for the keyfile slot, GRUB_TIMEOUT=2.

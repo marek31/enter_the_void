@@ -17,5 +17,5 @@ if status is-interactive
     abbr xr 'sudo xbps-remove -R'
     abbr xq 'xbps-query -Rs'
     abbr snaps 'snapper -c root list; snapper -c home list'
-    abbr vw-update 'sudo ~/void-workstation/setup.sh apps'
+    abbr ev-update 'sudo ~/enter_void/setup.sh apps'
 end

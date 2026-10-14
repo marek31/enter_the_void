@@ -1,4 +1,4 @@
-# void-workstation
+# enter_void
 
 Scripts that turn a blank ThinkPad X1 Carbon Gen 10 into `x1-void`: Void Linux, btrfs + snapper every 15 min,
 niri + Noctalia on Wayland, Helium + Floorp, LibreOffice, wifi printers and scanners, Resilio Sync and pCloud.
@@ -13,8 +13,8 @@ No flatpak, no snap. All decisions are listed (and editable) in [config.sh](conf
 
 ```sh
 xbps-install -Sy xbps git
-git clone https://github.com/marek31/void-workstation
-cd void-workstation
+git clone https://github.com/marek31/enter_void
+cd enter_void
 vi config.sh          # optional: disk, swap size, scale, ...
 ./install.sh          # wipes the disk you pick; asks for the disk passphrase and the user password
 ```
@@ -48,11 +48,11 @@ xu                         # update everything, wrapped in a snapper pre/post sn
 xi <pkg>                   # install, same snapshot wrapping
 snapper -c root list       # snapshots of /, also bootable from the grub menu
 sudo snapper-rollback N    # make snapshot N the new / (reboot afterwards)
-sudo ~/void-workstation/setup.sh apps    # update Helium, Floorp, Resilio, fonts, Noctalia
+sudo ~/enter_void/setup.sh apps    # update Helium, Floorp, Resilio, fonts, Noctalia
 ```
 
 `setup.sh` can be re-run any time, whole or per step: `base packages user security snapper login desktop apps finish`.
-Logs: `/var/log/void-workstation/`.
+Logs: `/var/log/enter_void/`.
 
 ## Files
 
@@ -63,4 +63,4 @@ Logs: `/var/log/void-workstation/`.
 | `install.sh` | live ISO -> partitions, LUKS, btrfs subvolumes, bootstrap, grub |
 | `setup.sh` | system config, services, hardening, snapper, desktop, upstream apps |
 | `files/` | configs copied to `/etc` and the home folder (dotfiles never overwrite your edits) |
-| `void_workstation_design.md` | why things are the way they are, gotchas, changelog |
+| `enter_void_design.md` | why things are the way they are, gotchas, changelog |

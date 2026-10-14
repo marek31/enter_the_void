@@ -13,8 +13,8 @@ log() { printf '\e[1;34m==> %s\e[0m\n' "$*"; }
 warn() { printf '\e[1;33m!! %s\e[0m\n' "$*" >&2; }
 die() { printf '\e[1;31m!! %s\e[0m\n' "$*" >&2; exit 1; }
 [[ $EUID -eq 0 ]] || die "run as root: sudo $0 $*"
-mkdir -p /var/log/void-workstation
-LOG=/var/log/void-workstation/$(date +%F_%H-%M-%S)-setup.log
+mkdir -p /var/log/enter_void
+LOG=/var/log/enter_void/$(date +%F_%H-%M-%S)-setup.log
 exec > >(tee -a "$LOG") 2>&1
 
 # put <mode> <dest> < content: atomic write, skipped if unchanged, old version backed up to /root/.backup
@@ -238,10 +238,10 @@ EOF
         fi
     done < <(find "$FILES/home" -type f -print0)
     as_user mkdir -p "$UHOME/Pictures/Screenshots" "$UHOME/Pictures/Wallpapers"
-    if [[ $HERE != "$UHOME/void-workstation" ]]; then   # keep a copy for later re-runs
-        rm -rf "$UHOME/void-workstation"
-        cp -r "$HERE" "$UHOME/void-workstation"
-        chown -R "$USERNAME:$USERNAME" "$UHOME/void-workstation"
+    if [[ $HERE != "$UHOME/enter_void" ]]; then   # keep a copy for later re-runs
+        rm -rf "$UHOME/enter_void"
+        cp -r "$HERE" "$UHOME/enter_void"
+        chown -R "$USERNAME:$USERNAME" "$UHOME/enter_void"
     fi
 }
 

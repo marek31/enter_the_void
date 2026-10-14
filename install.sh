@@ -12,7 +12,7 @@ log() { printf '\e[1;34m==> %s\e[0m\n' "$*"; }
 die() { printf '\e[1;31m!! %s\e[0m\n' "$*" >&2; exit 1; }
 part() { [[ $DISK =~ [0-9]$ ]] && echo "${DISK}p$1" || echo "${DISK}$1"; }
 
-echo "void-workstation installer - $HOSTNAME - log: $LOG"
+echo "enter_void installer - $HOSTNAME - log: $LOG"
 [[ $EUID -eq 0 ]] || die "run as root"
 [[ -d /sys/firmware/efi ]] || die "boot the ISO in UEFI mode"
 ping -c1 -W5 repo-default.voidlinux.org >/dev/null || die "no network (wifi: wpa_supplicant/nmtui, then retry)"
@@ -109,13 +109,13 @@ echo 'hostonly="yes"' > /mnt/etc/dracut.conf.d/00-hostonly.conf
 log "entering chroot"
 for d in sys dev proc; do mount --rbind "/$d" "/mnt/$d"; mount --make-rslave "/mnt/$d"; done
 cp -L /etc/resolv.conf /mnt/etc/
-rm -rf /mnt/root/void-workstation
-cp -r "$HERE" /mnt/root/void-workstation
+rm -rf /mnt/root/enter_void
+cp -r "$HERE" /mnt/root/enter_void
 chroot /mnt /bin/bash -c "
     set -e
     btrfs filesystem mkswapfile --size ${SWAP_GIB}g /swap/swapfile
     grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=Void
-    /root/void-workstation/setup.sh all
+    /root/enter_void/setup.sh all
 "
 
 cp "$LOG" /mnt/var/log/

@@ -1,4 +1,4 @@
-# void-workstation - design
+# enter_void - design
 
 ## Requirements
 - Void Linux workstation on a ThinkPad X1 Carbon Gen 10 (21CC, i5-1250P, Iris Xe, 16 GB, 512 GB NVMe, 2560x1440, AX211, SOF audio, Synaptics 06cb:00fc fingerprint, USB4).

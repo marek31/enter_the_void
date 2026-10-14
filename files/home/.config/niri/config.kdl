@@ -136,6 +136,7 @@ binds {
     Mod+B hotkey-overlay-title="Helium" { spawn "helium"; }
     Mod+Shift+B hotkey-overlay-title="Floorp" { spawn "floorp"; }
     Mod+E hotkey-overlay-title="Files" { spawn "thunar"; }
+    Mod+A hotkey-overlay-title="Audio mixer" { spawn "pavucontrol"; }
 
     // Noctalia
     Mod+Space hotkey-overlay-title="Launcher" { spawn-sh "noctalia msg panel-toggle launcher"; }

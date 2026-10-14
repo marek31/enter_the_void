@@ -33,6 +33,9 @@
 - **Locale:** English UI, Polish formats (LC_TIME, LC_PAPER=A4, ...). LC_NUMERIC stays English, because a decimal comma breaks scripts.
 - **Fonts:** Void packages plus JetBrains Mono and Cascadia Code from their GitHub releases, which Void doesn't package. All are OFL/Apache, the same files install on Windows.
 
+- **Printer autodetection:** network printers are found with avahi (mDNS, allowed through the firewall from the LAN) and get a CUPS queue from cups-browsed. Void's cups-browsed defaults to `CreateIPPPrinterQueues LocalOnly`, which only covers USB, so setup.sh appends `All`. USB printers: ipp-usb runs constantly (Void's README says udev-only start is unreliable at boot), and system-config-printer-udev adds classic USB printers when they're plugged in.
+- **Audio:** PipeWire mixes every app; pavucontrol (Mod+A) handles per-app volume and output, qpwgraph handles routing. Void ships bluetooth audio separately as `libspa-bluetooth`; without it headphones pair but never show up as an output.
+
 ## Dead ends
 - `power-profiles-daemon`: replaced by TLP on request; the two conflict.
 - Noctalia from the release tarball: the release assets are source, and the docs only describe building from git.
@@ -57,3 +60,4 @@ setup.sh steps: base (host, tz, locale, console), packages, user (groups, sudo, 
 - 2026-10-14: first version.
 - 2026-10-14: install.sh refuses disks with mounted partitions; log output flushed before exit; clearer UEFI error (first VM test).
 - 2026-10-14: disk picker lists only usable disks; zswap disabled (swap = plain swapfile only).
+- 2026-10-14: bluetooth audio (libspa-bluetooth: SBC/AAC/aptX/LDAC/LC3, wireplumber-elogind, blueman, battery levels, btusb kept out of TLP autosuspend); printers: network IPP queues auto-created (cups-browsed `CreateIPPPrinterQueues All`), ipp-usb service enabled, USB printers auto-added (system-config-printer-udev), user in lpadmin; qpwgraph + Mod+A mixer.

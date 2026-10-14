@@ -28,11 +28,12 @@ thermald fwupd fprintd libfprint bolt brightnessctl playerctl
 tlp tlp-pd tlp-rdw powertop
 
 # --- audio, network, bluetooth ---
-pipewire wireplumber alsa-pipewire libjack-pipewire pavucontrol
-NetworkManager network-manager-applet bluez wireguard-tools nftables apparmor
+# libspa-bluetooth = PipeWire bluetooth audio (SBC, AAC, aptX, LDAC, LC3); pavucontrol = per-app mixer; qpwgraph = routing
+pipewire wireplumber wireplumber-elogind libspa-bluetooth alsa-pipewire libjack-pipewire pavucontrol qpwgraph
+NetworkManager network-manager-applet bluez blueman wireguard-tools nftables apparmor
 
 # --- printing (wifi/IPP Everywhere) and scanning (eSCL/AirScan) ---
-cups cups-filters cups-browsed cups-pk-helper system-config-printer gutenprint hplip
+cups cups-filters cups-browsed cups-pk-helper system-config-printer system-config-printer-udev gutenprint hplip
 foomatic-db foomatic-db-nonfree ipp-usb avahi avahi-utils nss-mdns
 sane sane-airscan simple-scan xsane
 

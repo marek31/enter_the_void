@@ -88,7 +88,7 @@ step_user() {
     log "user $USERNAME, sudo"
     id "$USERNAME" &>/dev/null || useradd -m -c "$FULLNAME" -s /bin/bash "$USERNAME"
     local g
-    for g in wheel audio video input lp scanner network bluetooth storage optical plugdev _seatd; do
+    for g in wheel audio video input lp lpadmin scanner network bluetooth storage optical plugdev _seatd; do
         getent group "$g" >/dev/null && usermod -aG "$g" "$USERNAME"
     done
     [[ $(passwd -S "$USERNAME" | awk '{print $2}') == P ]] || { echo "Password for $USERNAME:"; passwd "$USERNAME"; }
@@ -199,7 +199,7 @@ EOF
 step_desktop() {
     log "services, audio, power, fonts, theme, dotfiles"
     sv_enable dbus elogind polkitd NetworkManager bluetoothd chronyd cronie socklog-unix nanoklogd \
-        cupsd cups-browsed avahi-daemon tlp tlp-pd thermald snapperd greetd
+        cupsd cups-browsed avahi-daemon ipp-usb tlp tlp-pd thermald snapperd greetd
 
     mkdir -p /etc/pipewire/pipewire.conf.d /etc/alsa/conf.d
     ln -sf /usr/share/examples/wireplumber/10-wireplumber.conf /etc/pipewire/pipewire.conf.d/
@@ -211,6 +211,15 @@ step_desktop() {
     # .local hostnames (printers, scanners) through avahi
     grep -q mdns_minimal /etc/nsswitch.conf ||
         sed -i 's/^hosts:.*files/& mdns_minimal [NOTFOUND=return]/' /etc/nsswitch.conf
+    # cups-browsed defaults to LocalOnly (USB only): also add a queue for every IPP Everywhere /
+    # AirPrint printer announced on the network. Later lines win, so the block goes at the end.
+    if ! grep -q '^# enter_void' /etc/cups/cups-browsed.conf; then
+        sed -i -E 's/^(BrowseRemoteProtocols|CreateIPPPrinterQueues)\b/#&/' /etc/cups/cups-browsed.conf
+        printf '%s\n' '# enter_void' 'BrowseRemoteProtocols dnssd' 'CreateIPPPrinterQueues All' >> /etc/cups/cups-browsed.conf
+    fi
+    # bluetooth: power on at boot, report headset battery level to Noctalia
+    sed -i -E -e 's/^#?\s*AutoEnable\s*=.*/AutoEnable = true/' \
+        -e 's/^#?\s*Experimental\s*=.*/Experimental = true/' /etc/bluetooth/main.conf
 
     put 644 /etc/fonts/local.conf < "$FILES/fonts-local.conf"
     ln -sf /usr/share/fontconfig/conf.avail/70-no-bitmaps.conf /etc/fonts/conf.d/

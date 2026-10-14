@@ -99,7 +99,7 @@ ESP_UUID=$(blkid -s UUID -o value "$ESP")
     echo "/swap/swapfile none swap defaults 0 0"
 } > /mnt/etc/fstab
 
-CMDLINE="loglevel=4 apparmor=1 security=apparmor"
+CMDLINE="loglevel=4 apparmor=1 security=apparmor zswap.enabled=0"   # swap = plain swapfile, no RAM compression
 if [[ $ENCRYPT == yes ]]; then
     log "keyfile so the passphrase is asked only once (by grub)"
     LUKS_UUID=$(blkid -s UUID -o value "$ROOT")

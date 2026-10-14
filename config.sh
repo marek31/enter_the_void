@@ -5,7 +5,8 @@
 #   distro      Void Linux x86_64 glibc, runit, no flatpak/snap/AppImage-runtime
 #   target      ThinkPad X1 Carbon Gen 10 (21CC): i5-1250P, Iris Xe, 16 GB, 512 GB NVMe, 2560x1440,
 #               AX211 wifi, SOF audio, Synaptics 06cb:00fc fingerprint reader, USB4/Thunderbolt
-#   disk        GPT: 1 GiB EFI + LUKS1 (grub can unlock it) holding btrfs; swapfile on @swap
+#   disk        GPT: 1 GiB EFI + LUKS1 (grub can unlock it) holding btrfs; no swap partition
+#   swap        plain swapfile on disk (@swap subvolume, inside LUKS); no zram, zswap disabled
 #   btrfs       @ / @home / @snapshots / @var_log / @var_cache / @var_tmp / @swap, /tmp is tmpfs
 #   snapshots   snapper, root + home every 15 min; caches, logs, temp, swap, snapshots are separate
 #               subvolumes so they are never snapshotted; grub-btrfs lists snapshots in the boot menu

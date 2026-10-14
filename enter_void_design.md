@@ -16,6 +16,7 @@
 
 ## Decisions (ADR)
 - **Disk layout (frozen after install):** GPT, 1 GiB ESP at `/boot/efi`, LUKS1 on the rest, btrfs with flat subvolumes `@ @home @snapshots @var_log @var_cache @var_tmp @swap`, top level at `/btrfsroot`. `/boot` sits inside `@`, so a snapshot always holds a matching kernel + modules. Changing it means reinstalling.
+- **Swap:** a plain swapfile `/swap/swapfile` (`btrfs filesystem mkswapfile`, size `SWAP_GIB`), no swap partition, no zram, and `zswap.enabled=0` on the kernel command line so the kernel does no RAM compression. The file sits in its own `@swap` subvolume because btrfs can't snapshot a subvolume holding an active swapfile.
 - **LUKS1, not LUKS2:** grub can only unlock LUKS2 with PBKDF2 and is unreliable with it. A keyfile in the initramfs (`/boot/cryptroot.key`, mode 000, `/boot` chmod go-rwx) means the passphrase is typed once, at grub.
 - **Snapshots:** snapper has no timer on Void (no systemd, and the package ships no cron script). `/usr/local/bin/snapper-tick` runs from `/etc/cron.d` every 15 min: creates a timeline snapshot per config, then cleans up. `TIMELINE_MIN_AGE=3600` keeps the last hour at 15-min resolution, then hourly 24 / daily 7 / weekly 4 / monthly 3. Exclusion = separate subvolume (btrfs snapshots stop at subvolume boundaries); home exclusions are in `HOME_NOSNAP`.
 - **Root snapshots on `@snapshots`, not nested `/.snapshots`:** needed by `snapper-rollback`, which swaps `@` for a snapshot. Home uses snapper's default nested `/home/.snapshots`.
@@ -55,3 +56,4 @@ setup.sh steps: base (host, tz, locale, console), packages, user (groups, sudo, 
 ## Changelog
 - 2026-10-14: first version.
 - 2026-10-14: install.sh refuses disks with mounted partitions; log output flushed before exit; clearer UEFI error (first VM test).
+- 2026-10-14: disk picker lists only usable disks; zswap disabled (swap = plain swapfile only).

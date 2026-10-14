@@ -116,8 +116,11 @@ step_security() {
     put 644 /etc/sysctl.d/90-hardening.conf < "$FILES/sysctl-hardening.conf"
     printf '* hard core 0\n' | put 644 /etc/security/limits.d/90-nocore.conf
     setkv /etc/default/apparmor APPARMOR enforce
-    grep -q 'apparmor=1' /etc/default/grub ||
-        sed -i 's/^GRUB_CMDLINE_LINUX_DEFAULT="/&apparmor=1 security=apparmor /' /etc/default/grub
+    local arg
+    for arg in apparmor=1 security=apparmor zswap.enabled=0; do   # zswap off: swap is a plain swapfile
+        grep -q "^GRUB_CMDLINE_LINUX_DEFAULT=.*$arg" /etc/default/grub ||
+            sed -i "s/^GRUB_CMDLINE_LINUX_DEFAULT=\"/&$arg /" /etc/default/grub
+    done
     put 644 /etc/NetworkManager/conf.d/20-privacy.conf <<'EOF'
 [device]
 wifi.scan-rand-mac-address=yes

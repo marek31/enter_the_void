@@ -22,6 +22,8 @@ vi config.sh          # optional: disk, swap size, scale, ...
 
 4. Reboot. grub asks for the disk passphrase once, tuigreet starts niri.
 
+If install.sh stops during setup (network, a download), do not reinstall: fix the cause, `git pull`, then `./resume.sh` in the same live session. It mounts the installed system (asking for the passphrase if needed) and re-runs setup.sh inside it; every step is safe to repeat. `./resume.sh apps finish` runs only those steps.
+
 ### Dual boot on the X1 (Windows stays)
 
 Checked on 2026-10-14: GPT disk with **97.1 GB unallocated** between C: and the Recovery partition, Secure Boot off,
@@ -78,6 +80,7 @@ Logs: `/var/log/enter_void/`.
 | `config.sh` | every decision: host, user, locale, keyboard, disk, snapshot policy, ports |
 | `packages.txt` | everything installed with xbps |
 | `install.sh` | live ISO -> partitions, LUKS, btrfs subvolumes, bootstrap, grub |
+| `resume.sh` | live ISO -> re-enter the installed system and run setup.sh steps (after a failed install, or to repair) |
 | `setup.sh` | system config, services, hardening, snapper, desktop, upstream apps |
 | `files/` | configs copied to `/etc` and the home folder (dotfiles never overwrite your edits) |
 | `enter_void_design.md` | why things are the way they are, gotchas, changelog |

@@ -65,6 +65,9 @@
 - X1 disk on 2026-10-14: p1 EFI 260 MB, p2 MSR, p3 C: 378.7 GB, 97.1 GB unallocated, p4 Recovery 0.9 GB at the end. Void becomes p5 inside the gap (partition numbers do not follow disk order).
 - GRUB_TOP_LEVEL names the exact BORE vmlinuz; `setup.sh kernel` rewrites it after every build. If that kernel is removed by hand, clear the line before running grub-mkconfig.
 - Check BORE after reboot: `uname -r` ends in `-bore`, `sysctl kernel.sched_bore` = 1.
+- Void's unzip: `*` does not match across folders, so `unzip zip '*.ttf'` finds nothing in zips with subfolders; unpack fully and `find`.
+- AppArmor on Void has no /etc/default/apparmor: `apparmor=1 security=apparmor` on the kernel line is all, enforce is the default.
+- snapper `TIMELINE_CREATE=yes` makes snapper call `systemctl enable snapper-timeline.timer`; keep it `no`, snapper-tick creates the snapshots.
 - `sv` commands do nothing inside the chroot; services are enabled by symlinks in `/etc/runit/runsvdir/default`.
 
 ## Current functionality
@@ -80,3 +83,4 @@ setup.sh steps: base (host, tz, locale, console), packages, user (groups, sudo, 
 - 2026-10-14: faster boot: LUKS_ITER_MS=500 for the passphrase slot, minimum iterations for the keyfile slot, GRUB_TIMEOUT=2.
 - 2026-10-14: dual boot: install mode `free` (new partition in unallocated space, shared EFI partition, os-prober); X1 checked ready (97.1 GB free, Secure Boot/BitLocker/Fast Startup off).
 - 2026-10-14: BORE scheduler kernel built from Void's template + CachyOS patch (step `kernel`, cron on AC); no-systemd recorded as a frozen decision.
+- 2026-10-15: first full VM run reached the apps step: fixed font unzip, AppArmor (no config file on Void), snapper TIMELINE_CREATE=no (no systemctl calls); added resume.sh to continue a half-finished install.

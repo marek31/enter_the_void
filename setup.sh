@@ -134,7 +134,7 @@ step_security() {
     nft -c -f /etc/nftables.conf || die "nftables.conf does not parse"
     put 644 /etc/sysctl.d/90-hardening.conf < "$FILES/sysctl-hardening.conf"
     printf '* hard core 0\n' | put 644 /etc/security/limits.d/90-nocore.conf
-    setkv /etc/default/apparmor APPARMOR enforce
+    # AppArmor on Void = the kernel parameters below; enforce is the default mode (no config file)
     setkv /etc/default/grub GRUB_DISABLE_OS_PROBER false   # Windows Boot Manager in the grub menu (dual boot)
     cmdline_set apparmor 1
     cmdline_set security apparmor
@@ -187,7 +187,8 @@ step_snapper() {
     chmod 750 /.snapshots /home/.snapshots
     local c
     for c in root home; do
-        snapper --no-dbus -c "$c" set-config TIMELINE_CREATE=yes TIMELINE_CLEANUP=yes TIMELINE_MIN_AGE=3600 \
+        # TIMELINE_CREATE only switches snapper's systemd timer; snapshots come from snapper-tick (cron)
+        snapper --no-dbus -c "$c" set-config TIMELINE_CREATE=no TIMELINE_CLEANUP=yes TIMELINE_MIN_AGE=3600 \
             TIMELINE_LIMIT_HOURLY="$SNAP_KEEP_HOURLY" TIMELINE_LIMIT_DAILY="$SNAP_KEEP_DAILY" \
             TIMELINE_LIMIT_WEEKLY="$SNAP_KEEP_WEEKLY" TIMELINE_LIMIT_MONTHLY="$SNAP_KEEP_MONTHLY" \
             TIMELINE_LIMIT_YEARLY=0 NUMBER_CLEANUP=yes NUMBER_LIMIT=20 ALLOW_GROUPS=wheel SYNC_ACL=yes \
@@ -385,7 +386,10 @@ font_zip() { # font_zip <dir> <owner/repo>
     tmp=$(mktemp -d)
     curl -fL --retry 3 --max-time 300 -o "$tmp/f.zip" "$url"
     rm -rf "$dest"; mkdir -p "$dest"
-    unzip -joq "$tmp/f.zip" '*.ttf' -d "$dest"
+    # unpack everything and copy the .ttf files: unzip's own '*' does not match across folders on Void
+    unzip -q "$tmp/f.zip" -d "$tmp/x"
+    find "$tmp/x" -name '*.ttf' -exec cp -t "$dest" {} +
+    compgen -G "$dest/*.ttf" >/dev/null || die "no .ttf files in $url"
     echo "$url" > "$dest/.version"
     rm -rf "$tmp"
 }

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Stage 2 - run as root, inside the install chroot (install.sh does it) or later on the running system.
 # Safe to re-run. Usage: sudo ./setup.sh [all | step...]
-# Steps: base packages user security snapper login desktop apps devtools finish   (e.g. `sudo ./setup.sh apps`)
+# Steps: base packages user security snapper login desktop apps devtools kernel finish   (e.g. `sudo ./setup.sh apps`)
 set -euo pipefail
 HERE=$(cd "$(dirname "$0")" && pwd)
 # shellcheck source=config.sh
@@ -255,6 +255,8 @@ PATH=/usr/local/bin:/usr/bin:/usr/sbin:/bin
 47 */6 * * * root /usr/local/lib/enter_void/setup.sh apps >/dev/null 2>&1
 # monthly checksum scrub of the whole btrfs filesystem
 0 11 1 * * root btrfs scrub start -Bd / >/dev/null 2>&1 || logger -t enter_void "btrfs scrub reported errors"
+# BORE kernel: rebuilt only when Void ships a new kernel, and only on AC power
+23 */6 * * * root /usr/local/lib/enter_void/setup.sh kernel >/dev/null 2>&1
 # plocate file-name index
 30 12 * * * root updatedb
 # hibernate at 5 % battery (elogind has no suspend-then-hibernate)
@@ -455,6 +457,82 @@ step_devtools() {
         as_user bash -o pipefail -c 'curl -fsSL https://omp.sh/install | sh -s -- --binary' || warn "oh-my-pi install failed"
 }
 
+on_ac() { # true on mains power, or when there is no battery at all (desktop, VM)
+    local p
+    compgen -G '/sys/class/power_supply/BAT*' >/dev/null || return 0
+    for p in /sys/class/power_supply/*; do
+        [[ $(cat "$p/type" 2>/dev/null) == Mains && $(cat "$p/online" 2>/dev/null) == 1 ]] && return 0
+    done
+    return 1
+}
+
+# BORE scheduler (as in CachyOS): Void's stock kernel template + CachyOS's standalone BORE patch, built with
+# xbps-src as linux<series>-bore. The stock kernel stays installed and in the grub menu as the fallback.
+step_kernel() {
+    [[ $KERNEL_BORE == yes ]] || { log "BORE kernel disabled in config.sh"; return 0; }
+    if [[ $(stat -c %d:%i /) != "$(stat -c %d:%i /proc/1/root/. 2>/dev/null)" ]]; then
+        log "BORE kernel: built after the first boot by cron (on AC power, about an hour), or run: sudo setup.sh kernel"
+        return 0
+    fi
+    exec 9>/run/enter_void-kernel.lock
+    flock -n 9 || { log "a BORE kernel build is already running"; return 0; }
+    local vp=/var/cache/void-packages series src pkg tver trev cur patch t free
+    install -d -o "$USERNAME" -g "$USERNAME" "$vp"
+    if [[ -d $vp/.git ]]; then
+        as_user git -C "$vp" fetch -q --depth 1 origin master
+        as_user git -C "$vp" reset -q --hard FETCH_HEAD
+    else
+        as_user git clone -q --depth 1 https://github.com/void-linux/void-packages "$vp"
+    fi
+    series=$(sed -n 's/^version=//p' "$vp/srcpkgs/linux/template")
+    src=$vp/srcpkgs/linux$series
+    pkg=linux$series-bore
+    tver=$(sed -n 's/^version=//p' "$src/template")
+    trev=$(sed -n 's/^revision=//p' "$src/template")
+    cur=$(xbps-query -p pkgver "$pkg" 2>/dev/null || true)
+    if [[ $cur == "$pkg-${tver}_$trev" ]]; then log "$pkg ${tver}_$trev is current"; return 0; fi
+    if [[ ! -t 0 ]] && ! on_ac; then log "on battery: $pkg build postponed"; return 0; fi
+    free=$(df --output=avail -BG /var/cache | tail -n1 | tr -dc 0-9)
+    (( free >= 25 )) || { warn "only ${free} GB free - a kernel build needs about 25 GB (estimate)"; return 0; }
+    patch=$(curl -fsSL --max-time 60 "https://raw.githubusercontent.com/CachyOS/kernel-patches/master/$series/sched/0001-bore.patch") ||
+        { warn "no BORE patch for linux $series yet - staying on the current kernel"; return 0; }
+
+    # linux6.18 -> linux6.18-bore: own package name, and "-bore" in the kernel release so /boot and
+    # /usr/lib/modules never collide with the stock kernel of the same version.
+    rm -rf "$vp/srcpkgs/$pkg" "$vp/srcpkgs/$pkg-headers" "$vp/srcpkgs/$pkg-dbg"
+    as_user cp -r "$src" "$vp/srcpkgs/$pkg"
+    t=$(<"$vp/srcpkgs/$pkg/template")
+    t=${t//"pkgname=linux$series"/"pkgname=$pkg"}
+    t=${t//"linux$series-headers_package"/"$pkg-headers_package"}
+    t=${t//"linux$series-dbg_package"/"$pkg-dbg_package"}
+    local rev_lit="_\${revision}"                    # literal text in the template, not expanded here
+    t=${t//"$rev_lit\""/"$rev_lit-bore\""}            # _kernver
+    t=${t//"$rev_lit\\\""/"$rev_lit-bore\\\""}        # CONFIG_LOCALVERSION
+    [[ $t == *"pkgname=$pkg"* && $(grep -c -- '-bore\\\?"' <<< "$t") -ge 2 ]] ||
+        die "the linux$series template layout changed - update step_kernel in setup.sh"
+    printf '%s\n' "$t" | as_user tee "$vp/srcpkgs/$pkg/template" >/dev/null
+    as_user mkdir -p "$vp/srcpkgs/$pkg/patches"
+    printf '%s\n' "$patch" | as_user tee "$vp/srcpkgs/$pkg/patches/0001-bore.patch" >/dev/null
+    # the template prefers x86_64-dotconfig-custom: Void's config + the two options BORE adds
+    { cat "$src/files/x86_64-dotconfig"; printf 'CONFIG_SCHED_BORE=y\nCONFIG_MIN_BASE_SLICE_NS=2000000\n'; } |
+        as_user tee "$vp/srcpkgs/$pkg/files/x86_64-dotconfig-custom" >/dev/null
+    as_user ln -sfn "$pkg" "$vp/srcpkgs/$pkg-headers"
+    as_user ln -sfn "$pkg" "$vp/srcpkgs/$pkg-dbg"
+
+    compgen -G "$vp/masterdir*" >/dev/null || as_user bash -c "cd '$vp' && ./xbps-src binary-bootstrap"
+    log "building $pkg ${tver}_$trev (about an hour of compiling)"
+    as_user bash -c "cd '$vp' && nice -n 19 ./xbps-src -j$(nproc) pkg $pkg"
+    xbps-install -Sy --repository "$vp/hostdir/binpkgs" "$pkg"
+    xbps-rindex -r "$vp/hostdir/binpkgs" >/dev/null 2>&1 || true
+    as_user bash -c "cd '$vp' && ./xbps-src clean" >/dev/null 2>&1 || true
+
+    local vmlinuz
+    vmlinuz=$(xbps-query -f "$pkg" | grep -m1 '^/boot/vmlinuz-')
+    setkv /etc/default/grub GRUB_TOP_LEVEL "$vmlinuz"   # boot BORE by default; stock kernel stays in the menu
+    grub-mkconfig -o /boot/grub/grub.cfg
+    log "BORE kernel installed ($vmlinuz) - reboot, then check: sysctl kernel.sched_bore"
+}
+
 step_finish() {
     log "rebuilding initramfs + grub menu"
     xbps-reconfigure -fa
@@ -462,7 +540,7 @@ step_finish() {
 }
 
 steps=("$@")
-[[ ${#steps[@]} -eq 0 || ${steps[0]} == all ]] && steps=(base packages user security snapper login desktop apps devtools finish)
+[[ ${#steps[@]} -eq 0 || ${steps[0]} == all ]] && steps=(base packages user security snapper login desktop apps devtools kernel finish)
 for s in "${steps[@]}"; do
     declare -F "step_$s" >/dev/null || die "unknown step '$s'"
     "step_$s"

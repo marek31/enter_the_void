@@ -45,6 +45,7 @@ If Windows ever boots straight to itself after an update, pick Void with F12 or 
 | Printer / scanner on wifi | usually found automatically; otherwise `system-config-printer`, scan with `simple-scan` |
 | Wallpapers | drop images into `~/Pictures/Wallpapers` |
 | Look | Super+, -> Theme: pick another palette, or "wallpaper" to derive colours from the wallpaper; every app follows |
+| BORE kernel | built automatically after the first boot when on AC (about an hour), or now: `sudo ~/enter_void/setup.sh kernel`; check with `uname -r` (ends in `-bore`) |
 | Dev tools | `claude`, `agy` (Antigravity CLI), `omp` (oh-my-pi), `cargo`/`rustup`, `go` - log in to each on first run |
 | Backups | snapshots are not backups: `restic` + `rclone` are installed, e.g. `restic -r rclone:pcloud:backup init` |
 
@@ -67,7 +68,7 @@ sudo snapper-rollback N    # make snapshot N the new / (reboot afterwards)
 sudo ~/enter_void/setup.sh apps    # update Helium, Floorp, Resilio, fonts, Noctalia now (cron does it every 6 h)
 ```
 
-`setup.sh` can be re-run any time, whole or per step: `base packages user security snapper login desktop apps devtools finish`.
+`setup.sh` can be re-run any time, whole or per step: `base packages user security snapper login desktop apps devtools kernel finish`.
 Logs: `/var/log/enter_void/`.
 
 ## Files

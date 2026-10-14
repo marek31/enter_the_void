@@ -23,6 +23,9 @@
 #   office      LibreOffice (Polish UI pack + spelling)
 #   printing    CUPS + cups-browsed + avahi (wifi/IPP Everywhere), sane-airscan for network scanners
 #   sync        Resilio Sync and pCloud installed, never autostarted (run `resilio` / `pcloud`)
+#   kernel      BORE scheduler (as in CachyOS): Void's kernel template + CachyOS's BORE patch, built
+#               locally with xbps-src as linux<series>-bore, default in grub; stock kernel kept as fallback
+#   init        runit, no systemd anywhere (elogind for seats/suspend only)
 #   power       TLP (+ tlp-pd so Noctalia's power-profile switch works), thermald
 #   security    nftables default-deny inbound, sysctl hardening, AppArmor enforce, root locked,
 #               no sshd, wifi MAC randomisation, Resilio WebUI on localhost only, UPnP off
@@ -61,6 +64,8 @@ SNAP_KEEP_WEEKLY=4
 SNAP_KEEP_MONTHLY=3
 # Paths under /home/$USERNAME turned into nested subvolumes = excluded from home snapshots.
 HOME_NOSNAP=(.cache .local/share/Trash .local/share/resilio-sync .pcloud)
+
+KERNEL_BORE=yes         # build + boot the BORE-patched kernel (first build ~1 h on AC power, needs ~25 GB free)
 
 SUDO_TIMEOUT_MIN=1440   # ask for the sudo password once per day
 RESILIO_PORT=55555      # fixed listening port, opened in the firewall

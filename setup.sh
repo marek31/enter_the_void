@@ -13,6 +13,12 @@ log() { printf '\e[1;34m==> %s\e[0m\n' "$*"; }
 warn() { printf '\e[1;33m!! %s\e[0m\n' "$*" >&2; }
 die() { printf '\e[1;31m!! %s\e[0m\n' "$*" >&2; exit 1; }
 [[ $EUID -eq 0 ]] || die "run as root: sudo $0 $*"
+# On the live ISO / is a small RAM overlay: setup.sh belongs to the installed system
+# (install.sh runs it in a chroot). The full package set needs roughly 15 GB (estimate, TeX is ~5 GB).
+[[ $(findmnt -no FSTYPE /) == btrfs ]] ||
+    die "/ is $(findmnt -no FSTYPE /), not the installed btrfs system - on the live ISO run ./install.sh instead"
+FREE_GB=$(df --output=avail -BG / | tail -n1 | tr -dc 0-9)
+(( FREE_GB >= 15 )) || die "only ${FREE_GB} GB free on / - the full package set needs about 15 GB"
 mkdir -p /var/log/enter_void
 LOG=/var/log/enter_void/$(date +%F_%H-%M-%S)-setup.log
 exec > >(tee -a "$LOG") 2>&1

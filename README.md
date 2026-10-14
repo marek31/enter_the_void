@@ -32,6 +32,9 @@ vi config.sh          # optional: disk, swap size, scale, ...
 | pCloud | download the Linux AppImage from <https://www.pcloud.com/download-free-online-cloud-file-storage.html>, then `pcloud-install`, then `pcloud` |
 | Printer / scanner on wifi | usually found automatically; otherwise `system-config-printer`, scan with `simple-scan` |
 | Wallpapers | drop images into `~/Pictures/Wallpapers` |
+| Look | Super+, -> Theme: pick another palette, or "wallpaper" to derive colours from the wallpaper; every app follows |
+| Dev tools | `claude`, `agy` (Antigravity CLI), `omp` (oh-my-pi), `cargo`/`rustup`, `go` - log in to each on first run |
+| Backups | snapshots are not backups: `restic` + `rclone` are installed, e.g. `restic -r rclone:pcloud:backup init` |
 
 ## Daily use
 
@@ -39,7 +42,7 @@ vi config.sh          # optional: disk, swap size, scale, ...
 |---|---|
 | Super+Space | launcher |
 | Super+S / Super+, | control center / Noctalia settings |
-| Super+Return / B / Shift+B / E | foot / Helium / Floorp / Thunar |
+| Super+Return / B / Shift+B / E / A | foot / Helium / Floorp / Thunar / audio mixer |
 | Super+O | overview |
 | Super+Alt+L | lock |
 | Super+Shift+/ | all key bindings |
@@ -49,10 +52,10 @@ xu                         # update everything, wrapped in a snapper pre/post sn
 xi <pkg>                   # install, same snapshot wrapping
 snapper -c root list       # snapshots of /, also bootable from the grub menu
 sudo snapper-rollback N    # make snapshot N the new / (reboot afterwards)
-sudo ~/enter_void/setup.sh apps    # update Helium, Floorp, Resilio, fonts, Noctalia
+sudo ~/enter_void/setup.sh apps    # update Helium, Floorp, Resilio, fonts, Noctalia now (cron does it every 6 h)
 ```
 
-`setup.sh` can be re-run any time, whole or per step: `base packages user security snapper login desktop apps finish`.
+`setup.sh` can be re-run any time, whole or per step: `base packages user security snapper login desktop apps devtools finish`.
 Logs: `/var/log/enter_void/`.
 
 ## Files

@@ -1,0 +1,11 @@
+#!/bin/sh
+# Started by niri: desktop notice when xbps has pending updates. The package index is refreshed
+# by root cron every 6 h; `xu` installs them inside a snapper pre/post snapshot pair.
+sleep 60
+while :; do
+    n=$(xbps-install -un 2>/dev/null | wc -l)
+    if [ "$n" -gt 0 ]; then
+        notify-send -a Updates -i system-software-update "$n package updates available" "Run xu in a terminal"
+    fi
+    sleep 21600
+done

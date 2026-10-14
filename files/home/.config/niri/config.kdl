@@ -27,8 +27,11 @@ output "eDP-1" {
     scale @SCALE@
 }
 
+// Look: one accent colour, thin ring, no borders, soft shadow, generous gaps.
+// Colours come from Noctalia (it appends `include "noctalia.kdl"` below and keeps it in sync
+// with the palette), so the values here are only the fallback before its first run.
 layout {
-    gaps 12
+    gaps 14
     center-focused-column "never"
     always-center-single-column
     background-color "transparent"
@@ -42,16 +45,16 @@ layout {
 
     focus-ring {
         width 2
-        active-gradient from="#89b4fa" to="#cba6f7" angle=45
-        inactive-color "#45475a"
+        active-color "#7e9cd8"
+        inactive-color "#2a2a37"
     }
     border { off; }
     shadow {
         on
-        softness 30
-        spread 4
-        offset x=0 y=6
-        color "#00000070"
+        softness 40
+        spread 2
+        offset x=0 y=8
+        color "#0000005a"
     }
     tab-indicator {
         width 4
@@ -68,15 +71,26 @@ prefer-no-csd
 screenshot-path "~/Pictures/Screenshots/%Y-%m-%d %H-%M-%S.png"
 hotkey-overlay { skip-at-startup; }
 
+cursor {
+    xcursor-theme "Bibata-Modern-Classic"
+    xcursor-size 24
+    hide-when-typing
+}
+
 environment {
     ELECTRON_OZONE_PLATFORM_HINT "auto"
     QT_QPA_PLATFORM "wayland;xcb"
+    QT_QPA_PLATFORMTHEME "qt6ct"        // Qt/KDE apps take the Noctalia palette via qt6ct
     MOZ_ENABLE_WAYLAND "1"
 }
 
 // pipewire pulls in wireplumber + pipewire-pulse (see /etc/pipewire/pipewire.conf.d)
 spawn-at-startup "pipewire"
+// PAM already unlocked the keyring; this registers it on the session bus (dbus-run-session starts later)
+spawn-at-startup "gnome-keyring-daemon" "--start" "--components=secrets"
 spawn-at-startup "noctalia"
+spawn-at-startup "udiskie" "--automount" "--notify"   // USB drives mount on plug-in
+spawn-at-startup "update-notify"
 
 animations {
     slowdown 0.9
@@ -101,16 +115,12 @@ layer-rule {
 
 // --- windows ---
 window-rule {
-    geometry-corner-radius 14
+    geometry-corner-radius 12
     clip-to-geometry true
     background-effect {
         blur true
         xray false
     }
-}
-window-rule {
-    match is-active=false
-    opacity 0.96
 }
 window-rule {
     match app-id="dev.noctalia.Noctalia"

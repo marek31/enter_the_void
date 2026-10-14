@@ -10,12 +10,12 @@
 - Host `x1-void`, user Marek, Polish programmer's keyboard, Europe/Warsaw. Open-licence fonts usable on Windows too.
 
 ## Non-goals
-- Flatpak, snap, AppImage runtime. Dual boot (install.sh wipes the whole disk). Secure Boot. Hibernation.
+- Flatpak, snap, AppImage runtime. Dual boot (install.sh wipes the whole disk). Secure Boot (not decided yet).
 - X11 sessions (X apps run through xwayland-satellite). musl. Other laptops (works, but hardware bits target the X1).
-- Off-machine backups: snapshots live on the same disk and are not a backup.
+- Automatic off-machine backups: restic + rclone are installed, but the target (pCloud, external disk) is not decided yet.
 
 ## Decisions (ADR)
-- **Disk layout (frozen after install):** GPT, 1 GiB ESP at `/boot/efi`, LUKS1 on the rest, btrfs with flat subvolumes `@ @home @snapshots @var_log @var_cache @var_tmp @swap`, top level at `/btrfsroot`. `/boot` sits inside `@`, so a snapshot always holds a matching kernel + modules. Changing it means reinstalling.
+- **Disk layout (frozen after install):** GPT, 1 GiB ESP at `/boot/efi`, LUKS1 on the rest, btrfs with flat subvolumes `@ @home @snapshots @var_log @var_cache @var_tmp @swap`, top level mounted at `/btrfsroot` only by snapper-rollback (`dev=` in its config). `/boot` sits inside `@`, so a snapshot always holds a matching kernel + modules. Changing it means reinstalling.
 - **Swap:** a plain swapfile `/swap/swapfile` (`btrfs filesystem mkswapfile`, size `SWAP_GIB`), no swap partition, no zram, and `zswap.enabled=0` on the kernel command line so the kernel does no RAM compression. The file sits in its own `@swap` subvolume because btrfs can't snapshot a subvolume holding an active swapfile.
 - **LUKS1, not LUKS2:** grub can only unlock LUKS2 with PBKDF2 and is unreliable with it. A keyfile in the initramfs (`/boot/cryptroot.key`, mode 000, `/boot` chmod go-rwx) means the passphrase is typed once, at grub.
 - **Snapshots:** snapper has no timer on Void (no systemd, and the package ships no cron script). `/usr/local/bin/snapper-tick` runs from `/etc/cron.d` every 15 min: creates a timeline snapshot per config, then cleans up. `TIMELINE_MIN_AGE=3600` keeps the last hour at 15-min resolution, then hourly 24 / daily 7 / weekly 4 / monthly 3. Exclusion = separate subvolume (btrfs snapshots stop at subvolume boundaries); home exclusions are in `HOME_NOSNAP`.
@@ -31,6 +31,10 @@
 - **sudo:** `timestamp_timeout=1440` + `timestamp_type=global`, so one password per day across all terminals (reset on reboot). pam_fprintd is `sufficient` in `/etc/pam.d/sudo`. Login stays password-only so gnome-keyring unlocks.
 - **User name:** `marek` login with full name "Marek". shadow's useradd rejects capitals by default.
 - **Locale:** English UI, Polish formats (LC_TIME, LC_PAPER=A4, ...). LC_NUMERIC stays English, because a decimal comma breaks scripts.
+- **Look (minimal):** Noctalia owns the palette (builtin Kanagawa) and pushes it through its builtin templates to niri (`include "noctalia.kdl"`), foot, GTK 3/4, qt5ct/qt6ct, KDE colour scheme, btop and starship, so there is one colour scheme everywhere and switching it in Settings restyles everything. Dotfiles therefore hold layout only, no colours (niri keeps fallback colours). Thin floating capsule bar with 7 widgets, 2 px single-colour focus ring, no borders, soft shadow, 12 px corners, Inter + JetBrains Mono, Bibata cursor (GitHub release, Void has no package), Hokusai wallpaper (public domain, Wikimedia).
+- **Upkeep (cron, root-owned copy in /usr/local/lib/enter_void):** `xbps-install -S` + `setup.sh apps` every 6 h (an app in use is skipped, so a running browser is never swapped out), monthly `btrfs scrub`, daily `updatedb`, `battery-guard` every 2 min. The desktop gets update notices from `update-notify`. Cron never runs a script the user can edit.
+- **Hibernation:** into the swapfile (`resume=` + `resume_offset=` from `btrfs inspect-internal map-swapfile`, dracut `resume` module). elogind has no suspend-then-hibernate, so `battery-guard` hibernates at 5 % while discharging; it cannot run during suspend.
+- **Dev tools:** Go from xbps, Rust through rustup (`~/.cargo`), Claude Code / Antigravity CLI / oh-my-pi through their official checksum-verifying installers into `~/.local/bin`, run as the user. Each updates itself. A failed installer only warns.
 - **Fonts:** Void packages plus JetBrains Mono and Cascadia Code from their GitHub releases, which Void doesn't package. All are OFL/Apache, the same files install on Windows.
 
 - **Printer autodetection:** network printers are found with avahi (mDNS, allowed through the firewall from the LAN) and get a CUPS queue from cups-browsed. Void's cups-browsed defaults to `CreateIPPPrinterQueues LocalOnly`, which only covers USB, so setup.sh appends `All`. USB printers: ipp-usb runs constantly (Void's README says udev-only start is unreliable at boot), and system-config-printer-udev adds classic USB printers when they're plugged in.
@@ -38,6 +42,8 @@
 
 ## Dead ends
 - `power-profiles-daemon`: replaced by TLP on request; the two conflict.
+- suspend-then-hibernate on lid close: elogind only offers `suspend`/`ignore` for `HandleLidSwitch`.
+- Chromium password store auto-detection: on niri it falls back to "basic" (unencrypted); the Helium wrapper forces `gnome-libsecret`.
 - Noctalia from the release tarball: the release assets are source, and the docs only describe building from git.
 - `hunspell-pl_PL`, `font-jetbrains-mono`, `adw-gtk3`, `mission-center`, `rustdesk` don't exist in the Void repos (checked 2026-10-14).
 
@@ -50,14 +56,17 @@
 - VMs: firmware must be UEFI (VirtualBox: System > Enable EFI; Hyper-V: Generation 2 with Secure Boot off; virt-manager: choose UEFI before creating the VM, it can't be changed later) and 3D acceleration on, or niri has no GPU to render with.
 - install.sh refuses any disk with a mounted partition, so it can't wipe the system it runs on; it must run from the live ISO.
 - `exec > >(tee ...)` is asynchronous: without the EXIT trap that closes stdout and waits for tee, messages show up after the shell prompt.
+- Antigravity CLI needs AES-NI: in a VM pass the host CPU through, or `agy` dies with an illegal instruction.
+- Noctalia template ids that are not listed in `builtin_ids` are not applied: an empty list means none, not all.
 - `sv` commands do nothing inside the chroot; services are enabled by symlinks in `/etc/runit/runsvdir/default`.
 
 ## Current functionality
 install.sh: disk wipe + LUKS1 + btrfs subvolumes + bootstrap + fstab + keyfile + grub, then setup.sh in a chroot.
-setup.sh steps: base (host, tz, locale, console), packages, user (groups, sudo, fingerprint for sudo), security, snapper, login, desktop (services, audio, TLP, fonts, dconf theme, dotfiles), apps (Helium, Floorp, Resilio, pCloud installer, fonts, Noctalia), finish (initramfs + grub).
+setup.sh steps: base (host, tz, locale, console), packages, user (groups, sudo, fingerprint for sudo), security, snapper, login, desktop (services, audio, TLP, fonts, dconf theme, dotfiles), apps (Helium, Floorp, Resilio, pCloud installer, fonts, cursor, Noctalia), devtools (rustup, Claude Code, agy, omp), finish (initramfs + grub).
 
 ## Changelog
 - 2026-10-14: first version.
 - 2026-10-14: install.sh refuses disks with mounted partitions; log output flushed before exit; clearer UEFI error (first VM test).
 - 2026-10-14: disk picker lists only usable disks; zswap disabled (swap = plain swapfile only).
 - 2026-10-14: bluetooth audio (libspa-bluetooth: SBC/AAC/aptX/LDAC/LC3, wireplumber-elogind, blueman, battery levels, btusb kept out of TLP autosuspend); printers: network IPP queues auto-created (cups-browsed `CreateIPPPrinterQueues All`), ipp-usb service enabled, USB printers auto-added (system-config-printer-udev), user in lpadmin; qpwgraph + Mod+A mixer.
+- 2026-10-14: review fixes: Helium uses libsecret + VA-API; keyring registered on the session bus; /btrfsroot no longer mounted; auto-updates + update notices; earlyoom, udiskie, smartd, monthly scrub, updatedb pruning, snapper FREE_LIMIT; hibernation + battery-guard; turbo boost on battery; alsa-ucm-conf; default apps; keepassxc, restic, rclone; cliphist removed. Minimal look with one Noctalia palette (Kanagawa) everywhere, Bibata cursor, Great Wave wallpaper, starship prompt. Dev tools: rustup, Claude Code, Antigravity CLI, oh-my-pi.

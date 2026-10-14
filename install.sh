@@ -76,8 +76,8 @@ for sv in "${SUBVOLS[@]:1}"; do
     mkdir -p "/mnt${sv#*:}"
     mount -o "$BTRFS_OPTS,subvol=${sv%%:*}" "$DEV" "/mnt${sv#*:}"
 done
+# /btrfsroot stays an empty mount point: snapper-rollback mounts the top level there only while rolling back.
 mkdir -p /mnt/btrfsroot /mnt/boot/efi
-mount -o "$BTRFS_OPTS,subvolid=5" "$DEV" /mnt/btrfsroot
 mount "$ESP" /mnt/boot/efi
 chmod 1777 /mnt/var/tmp
 
@@ -93,13 +93,13 @@ ESP_UUID=$(blkid -s UUID -o value "$ESP")
     for sv in "${SUBVOLS[@]}"; do
         echo "UUID=$FS_UUID ${sv#*:} btrfs $BTRFS_OPTS,subvol=${sv%%:*} 0 0"
     done
-    echo "UUID=$FS_UUID /btrfsroot btrfs $BTRFS_OPTS,subvolid=5 0 0"
     echo "UUID=$ESP_UUID /boot/efi vfat defaults,umask=0077 0 2"
     echo "tmpfs /tmp tmpfs defaults,nosuid,nodev,mode=1777 0 0"
     echo "/swap/swapfile none swap defaults 0 0"
 } > /mnt/etc/fstab
 
 CMDLINE="loglevel=4 apparmor=1 security=apparmor zswap.enabled=0"   # swap = plain swapfile, no RAM compression
+mkdir -p /mnt/etc/dracut.conf.d
 if [[ $ENCRYPT == yes ]]; then
     log "keyfile so the passphrase is asked only once (by grub)"
     LUKS_UUID=$(blkid -s UUID -o value "$ROOT")
@@ -107,7 +107,6 @@ if [[ $ENCRYPT == yes ]]; then
     chmod 000 /mnt/boot/cryptroot.key
     cryptsetup luksAddKey --key-file=<(printf '%s' "$PASS") "$ROOT" /mnt/boot/cryptroot.key
     echo "cryptroot UUID=$LUKS_UUID /boot/cryptroot.key luks,discard" > /mnt/etc/crypttab
-    mkdir -p /mnt/etc/dracut.conf.d
     echo 'install_items+=" /boot/cryptroot.key /etc/crypttab "' > /mnt/etc/dracut.conf.d/10-crypt.conf
     echo 'GRUB_ENABLE_CRYPTODISK=y' >> /mnt/etc/default/grub
     CMDLINE+=" rd.luks.uuid=$LUKS_UUID rd.luks.allow-discards"

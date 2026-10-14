@@ -11,8 +11,8 @@ chrony socklog-void cronie terminus-font
 # --- session: niri on Wayland, greetd login ---
 elogind dbus polkit greetd tuigreet
 niri xwayland-satellite xdg-desktop-portal xdg-desktop-portal-gnome xdg-desktop-portal-gtk
-gnome-keyring seahorse dconf xdg-user-dirs xdg-utils wl-clipboard cliphist
-adwaita-icon-theme papirus-icon-theme
+gnome-keyring seahorse dconf xdg-user-dirs xdg-utils wl-clipboard libnotify udiskie earlyoom
+adwaita-icon-theme papirus-icon-theme qt6ct qt5ct breeze
 
 # --- noctalia shell build deps (from noctalia BUILDING.md, Void section) ---
 meson ninja pkg-config git just gcc
@@ -29,7 +29,7 @@ tlp tlp-pd tlp-rdw powertop
 
 # --- audio, network, bluetooth ---
 # libspa-bluetooth = PipeWire bluetooth audio (SBC, AAC, aptX, LDAC, LC3); pavucontrol = per-app mixer; qpwgraph = routing
-pipewire wireplumber wireplumber-elogind libspa-bluetooth alsa-pipewire libjack-pipewire pavucontrol qpwgraph
+pipewire wireplumber wireplumber-elogind libspa-bluetooth alsa-ucm-conf alsa-pipewire libjack-pipewire pavucontrol qpwgraph
 NetworkManager network-manager-applet bluez blueman wireguard-tools nftables apparmor
 
 # --- printing (wifi/IPP Everywhere) and scanning (eSCL/AirScan) ---
@@ -51,12 +51,12 @@ font-adobe-source-code-pro font-source-sans-3 font-adobe-source-serif-pro
 fonts-roboto-ttf ttf-opensans font-atkinson-hyperlegible-ttf nerd-fonts-symbols-ttf
 
 # --- files, media, desktop apps (replaces the old flatpak list) ---
-foot Thunar thunar-volman thunar-archive-plugin gvfs gvfs-smb gvfs-mtp tumbler file-roller
+foot Thunar thunar-volman thunar-archive-plugin gvfs gvfs-smb gvfs-mtp tumbler ffmpegthumbnailer file-roller
 udisks2 ntfs-3g exfatprogs dosfstools cifs-utils nfs-utils
 okular zathura zathura-pdf-mupdf geeqie qimgv imv mpv vlc gimp ffmpeg yt-dlp
 gst-plugins-good1 gst-plugins-bad1 gst-plugins-ugly1 gst-libav
 Signal-Desktop remmina qbittorrent calibre kate qalculate-qt fsearch qdirstat gparted
-meld kdiff3 krename ncmpcpp
+meld kdiff3 krename ncmpcpp keepassxc restic rclone
 
 # --- shell and CLI tools ---
 fish-shell bash-completion starship eza bat ripgrep fd fzf zoxide tmux vim neovim mc nnn
@@ -64,7 +64,9 @@ htop btop glances nmon iftop nmap speedtest-cli duf plocate lsof strace usbutils
 curl wget rsync jq unzip zip 7zip xz zstd man-pages man-db tealdeer trash-cli acl bind-utils fastfetch
 
 # --- development ---
-base-devel github-cli git-lfs cmake make automake bison flex python3 uv go hugo shellcheck
+# Rust comes through rustup (toolchain in ~/.cargo, set up by `setup.sh devtools`); Go from xbps.
+# Claude Code, Antigravity CLI (agy) and oh-my-pi (omp) use their official installers into ~/.local/bin.
+base-devel github-cli git-lfs cmake make automake bison flex python3 uv go rustup hugo shellcheck
 
 # --- TeX (big, ~5 GB; carried over from the Fedora setup - comment out if not needed) ---
 texlive-full

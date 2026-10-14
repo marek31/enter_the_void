@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Stage 2 - run as root, inside the install chroot (install.sh does it) or later on the running system.
 # Safe to re-run. Usage: sudo ./setup.sh [all | step...]
-# Steps: base packages user security snapper login desktop apps     (e.g. `sudo ./setup.sh apps` updates browsers + Noctalia)
+# Steps: base packages user security snapper login desktop apps devtools finish   (e.g. `sudo ./setup.sh apps`)
 set -euo pipefail
 HERE=$(cd "$(dirname "$0")" && pwd)
 # shellcheck source=config.sh
@@ -49,7 +49,20 @@ sv_enable() {
     done
 }
 sv_disable() { local s; for s; do rm -f "/etc/runit/runsvdir/default/$s"; done; }
-as_user() { runuser -u "$USERNAME" -- "$@"; }
+# run as the desktop user with that user's HOME (runuser alone may keep root's HOME inside the chroot)
+as_user() {
+    (cd "$UHOME" && runuser -u "$USERNAME" -- env HOME="$UHOME" USER="$USERNAME" LOGNAME="$USERNAME" \
+        PATH="$UHOME/.local/bin:$UHOME/.cargo/bin:/usr/local/bin:/usr/bin:/usr/sbin:/bin" "$@")
+}
+# cmdline_set <key> [value]: put key[=value] on the grub kernel command line, replacing any old value
+cmdline_set() {
+    local line w words=() out=()
+    line=$(sed -n 's/^GRUB_CMDLINE_LINUX_DEFAULT="\(.*\)"$/\1/p' /etc/default/grub)
+    read -ra words <<< "$line"
+    for w in "${words[@]}"; do [[ $w == "$1" || $w == "$1="* ]] || out+=("$w"); done
+    out+=("$1${2:+=$2}")
+    sed -i "s|^GRUB_CMDLINE_LINUX_DEFAULT=.*|GRUB_CMDLINE_LINUX_DEFAULT=\"${out[*]}\"|" /etc/default/grub
+}
 
 step_base() {
     log "hostname, time zone, locale, console"
@@ -116,11 +129,14 @@ step_security() {
     put 644 /etc/sysctl.d/90-hardening.conf < "$FILES/sysctl-hardening.conf"
     printf '* hard core 0\n' | put 644 /etc/security/limits.d/90-nocore.conf
     setkv /etc/default/apparmor APPARMOR enforce
-    local arg
-    for arg in apparmor=1 security=apparmor zswap.enabled=0; do   # zswap off: swap is a plain swapfile
-        grep -q "^GRUB_CMDLINE_LINUX_DEFAULT=.*$arg" /etc/default/grub ||
-            sed -i "s/^GRUB_CMDLINE_LINUX_DEFAULT=\"/&$arg /" /etc/default/grub
-    done
+    cmdline_set apparmor 1
+    cmdline_set security apparmor
+    cmdline_set zswap.enabled 0          # swap is a plain swapfile, no RAM compression
+    if [[ -f /swap/swapfile ]]; then     # hibernate into the swapfile (encrypted, inside LUKS)
+        cmdline_set resume "UUID=$(findmnt -no UUID -T /swap/swapfile)"
+        cmdline_set resume_offset "$(btrfs inspect-internal map-swapfile -r /swap/swapfile)"
+        echo 'add_dracutmodules+=" resume "' | put 644 /etc/dracut.conf.d/20-resume.conf
+    fi
     put 644 /etc/NetworkManager/conf.d/20-privacy.conf <<'EOF'
 [device]
 wifi.scan-rand-mac-address=yes
@@ -167,8 +183,21 @@ step_snapper() {
         snapper --no-dbus -c "$c" set-config TIMELINE_CREATE=yes TIMELINE_CLEANUP=yes TIMELINE_MIN_AGE=3600 \
             TIMELINE_LIMIT_HOURLY="$SNAP_KEEP_HOURLY" TIMELINE_LIMIT_DAILY="$SNAP_KEEP_DAILY" \
             TIMELINE_LIMIT_WEEKLY="$SNAP_KEEP_WEEKLY" TIMELINE_LIMIT_MONTHLY="$SNAP_KEEP_MONTHLY" \
-            TIMELINE_LIMIT_YEARLY=0 NUMBER_CLEANUP=yes NUMBER_LIMIT=20 ALLOW_GROUPS=wheel SYNC_ACL=yes
+            TIMELINE_LIMIT_YEARLY=0 NUMBER_CLEANUP=yes NUMBER_LIMIT=20 ALLOW_GROUPS=wheel SYNC_ACL=yes \
+            FREE_LIMIT=0.2   # cleanup also deletes old snapshots until 20 % of the disk is free
     done
+    # snapper-rollback mounts the btrfs top level itself, so nothing (search, backups, Thunar) sees
+    # every snapshot under a permanent /btrfsroot mount.
+    local fs_uuid; fs_uuid=$(findmnt -no UUID /)
+    if grep -qE '^#?\s*dev\s*=' /etc/snapper-rollback.conf; then
+        sed -i -E "s|^#?\s*dev\s*=.*|dev = /dev/disk/by-uuid/$fs_uuid|" /etc/snapper-rollback.conf
+    else
+        echo "dev = /dev/disk/by-uuid/$fs_uuid" >> /etc/snapper-rollback.conf
+    fi
+    if grep -q ' /btrfsroot ' /etc/fstab; then   # installs made before 2026-10-14
+        sed -i '\| /btrfsroot |d' /etc/fstab
+        umount /btrfsroot 2>/dev/null || true
+    fi
     local rel
     for rel in "${HOME_NOSNAP[@]}"; do nosnap_subvol "$UHOME/$rel"; done
     put 755 /usr/local/bin/snapper-tick < "$FILES/snapper-tick"
@@ -199,7 +228,41 @@ EOF
 step_desktop() {
     log "services, audio, power, fonts, theme, dotfiles"
     sv_enable dbus elogind polkitd NetworkManager bluetoothd chronyd cronie socklog-unix nanoklogd \
-        cupsd cups-browsed avahi-daemon ipp-usb tlp tlp-pd thermald snapperd greetd
+        cupsd cups-browsed avahi-daemon ipp-usb tlp tlp-pd thermald snapperd greetd earlyoom smartd
+
+    # cron must never run a script the desktop user can edit: keep a root-owned copy
+    if [[ $HERE != /usr/local/lib/enter_void ]]; then
+        rm -rf /usr/local/lib/enter_void.new
+        cp -r "$HERE" /usr/local/lib/enter_void.new
+        chown -R root:root /usr/local/lib/enter_void.new
+        rm -rf /usr/local/lib/enter_void
+        mv /usr/local/lib/enter_void.new /usr/local/lib/enter_void
+    fi
+    put 755 /usr/local/bin/battery-guard < "$FILES/battery-guard"
+    put 755 /usr/local/bin/update-notify < "$FILES/update-notify"
+    put 644 /etc/cron.d/enter_void <<'EOF'
+PATH=/usr/local/bin:/usr/bin:/usr/sbin:/bin
+# package index refresh, so update-notify (desktop) can count pending updates
+17 */6 * * * root xbps-install -S >/dev/null 2>&1
+# Helium, Floorp, Resilio, fonts, cursor, Noctalia: installed when a new release is out (skipped while running)
+47 */6 * * * root /usr/local/lib/enter_void/setup.sh apps >/dev/null 2>&1
+# monthly checksum scrub of the whole btrfs filesystem
+0 11 1 * * root btrfs scrub start -Bd / >/dev/null 2>&1 || logger -t enter_void "btrfs scrub reported errors"
+# plocate file-name index
+30 12 * * * root updatedb
+# hibernate at 5 % battery (elogind has no suspend-then-hibernate)
+*/2 * * * * root battery-guard
+EOF
+    put 644 /etc/updatedb.conf <<'EOF'
+PRUNE_BIND_MOUNTS="yes"
+PRUNEFS="tmpfs proc sysfs devtmpfs devpts fuse.gvfsd-fuse fuse.rclone fuse.pCloud"
+PRUNENAMES=".git .snapshots node_modules"
+PRUNEPATHS="/tmp /var/tmp /var/cache /.snapshots /home/.snapshots /btrfsroot /swap /proc /sys /run"
+EOF
+    # user tool dirs on PATH for everything started from the session, not only shells
+    put 644 /etc/profile.d/enter_void.sh <<'EOF'
+export PATH="$HOME/.local/bin:$HOME/.cargo/bin:$HOME/go/bin:$PATH"
+EOF
 
     mkdir -p /etc/pipewire/pipewire.conf.d /etc/alsa/conf.d
     ln -sf /usr/share/examples/wireplumber/10-wireplumber.conf /etc/pipewire/pipewire.conf.d/
@@ -235,8 +298,10 @@ icon-theme='Papirus-Dark'
 font-name='Inter 10'
 document-font-name='Inter 10'
 monospace-font-name='JetBrains Mono 10'
-font-antialiasing='rgba'
+font-antialiasing='grayscale'
 font-hinting='slight'
+cursor-theme='Bibata-Modern-Classic'
+cursor-size=24
 EOF
     dconf update
 
@@ -252,6 +317,13 @@ EOF
         fi
     done < <(find "$FILES/home" -type f -print0)
     as_user mkdir -p "$UHOME/Pictures/Screenshots" "$UHOME/Pictures/Wallpapers"
+    # default wallpaper (public domain, Hokusai) - matches the Kanagawa palette
+    local wp=$UHOME/Pictures/Wallpapers/great-wave.jpg
+    if [[ ! -s $wp ]] && ! as_user curl -fsSL --max-time 120 -o "$wp" \
+        https://upload.wikimedia.org/wikipedia/commons/a/a5/Tsunami_by_hokusai_19th_century.jpg; then
+        rm -f "$wp"
+        warn "wallpaper download failed; put any image into ~/Pictures/Wallpapers"
+    fi
     if [[ $HERE != "$UHOME/enter_void" ]]; then   # keep a copy for later re-runs
         rm -rf "$UHOME/enter_void"
         cp -r "$HERE" "$UHOME/enter_void"
@@ -265,13 +337,15 @@ gh_asset() { # gh_asset <owner/repo> <asset-name regex> -> download URL of the l
         jq -r --arg re "$2" '[.assets[] | select(.name | test($re))][0].browser_download_url // empty' ||
         die "GitHub API request failed for $1 (rate limit is 60/hour)"
 }
-opt_install() { # opt_install <name> <url> <tar --strip-components> <version key>
-    local dest=/opt/$1 tmp
-    [[ -n $2 ]] || die "no download URL for $1"
-    if [[ $(cat "$dest/.version" 2>/dev/null) == "$4" ]]; then log "$1 is current"; return 0; fi
-    log "installing $1 from $2"
-    mkdir -p /opt
-    tmp=$(mktemp -d /opt/.install.XXXXXX)
+opt_install() { # opt_install <dest dir> <url> <tar --strip-components> <version key>
+    local dest=$1 tmp
+    [[ -n $2 ]] || die "no download URL for $dest"
+    if [[ $(cat "$dest/.version" 2>/dev/null) == "$4" ]]; then log "$dest is current"; return 0; fi
+    # swapping the directory under a running browser crashes it; the next cron run retries
+    if pgrep -f "^$dest/" >/dev/null; then warn "$dest is in use - update postponed"; return 0; fi
+    log "installing $dest from $2"
+    mkdir -p "$(dirname "$dest")"
+    tmp=$(mktemp -d "$(dirname "$dest")/.install.XXXXXX")
     curl -fL --retry 3 --max-time 900 -o "$tmp/pkg" "$2"
     mkdir "$tmp/root"
     tar -xf "$tmp/pkg" -C "$tmp/root" --strip-components="$3" --no-same-owner
@@ -311,17 +385,23 @@ step_apps() {
     local url web="text/html;x-scheme-handler/http;x-scheme-handler/https;application/xhtml+xml;application/pdf"
 
     url=$(gh_asset imputnet/helium-linux 'x86_64_linux\.tar\.xz$')
-    opt_install helium "$url" 1 "$url"
-    printf '#!/bin/sh\nexec /opt/helium/helium-wrapper --ozone-platform-hint=auto "$@"\n' | put 755 /usr/local/bin/helium
+    opt_install /opt/helium "$url" 1 "$url"
+    # libsecret: on niri Chromium can't detect a desktop and would store passwords unencrypted.
+    # VA-API: hardware video decode on Iris Xe (battery).
+    put 755 /usr/local/bin/helium <<'EOF'
+#!/bin/sh
+exec /opt/helium/helium-wrapper --ozone-platform-hint=auto --password-store=gnome-libsecret \
+    --enable-features=AcceleratedVideoDecodeLinuxGL,AcceleratedVideoDecodeLinuxZeroCopyGL,AcceleratedVideoEncoder "$@"
+EOF
     desktop_entry helium Helium "helium %U" /opt/helium/product_logo_256.png "Network;WebBrowser;" "$web"
 
     url=$(gh_asset Floorp-Projects/Floorp '^floorp-linux-x86_64\.tar\.xz$')
-    opt_install floorp "$url" 1 "$url"
+    opt_install /opt/floorp "$url" 1 "$url"
     ln -sf /opt/floorp/floorp /usr/local/bin/floorp
     desktop_entry floorp Floorp "floorp %u" /opt/floorp/browser/chrome/icons/default/default128.png "Network;WebBrowser;" "$web"
 
     url=https://download-cdn.resilio.com/stable/linux/x64/0/resilio-sync_x64.tar.gz
-    opt_install resilio "$url" 0 "$(curl -fsIL --max-time 30 "$url" | tr -d '\r' | awk -F': ' 'tolower($1)=="etag"{e=$2} END{print e}')"
+    opt_install /opt/resilio "$url" 0 "$(curl -fsIL --max-time 30 "$url" | tr -d '\r' | awk -F': ' 'tolower($1)=="etag"{e=$2} END{print e}')"
     ln -sf /opt/resilio/rslsync /usr/local/bin/rslsync
     put 755 /usr/local/bin/resilio < "$FILES/resilio"
     desktop_entry resilio "Resilio Sync" "resilio start" folder-sync "Network;FileTransfer;"
@@ -332,18 +412,40 @@ step_apps() {
     font_zip CascadiaCode microsoft/cascadia-code
     fc-cache -f >/dev/null
 
+    # cursor: not packaged by Void; /usr/share/icons is on every toolkit's default cursor path
+    url=$(gh_asset ful1e5/Bibata_Cursor '^Bibata-Modern-Classic\.tar\.xz$')
+    opt_install /usr/share/icons/Bibata-Modern-Classic "$url" 1 "$url"
+
     local tag src=/var/cache/noctalia-src
     tag=$(curl -fsSL --max-time 30 https://api.github.com/repos/noctalia-dev/noctalia/releases/latest | jq -r .tag_name)
     [[ $tag == v* ]] || die "could not read the latest Noctalia release tag"
-    if [[ $(cat /usr/local/share/noctalia/.version 2>/dev/null) != "$tag" ]]; then
+    if [[ $(cat /usr/local/share/noctalia/.version 2>/dev/null) == "$tag" ]]; then
+        log "Noctalia $tag is current"
+    elif pgrep -x noctalia >/dev/null && [[ ! -t 0 ]]; then
+        warn "Noctalia $tag is out, but the shell is running - run 'sudo setup.sh apps' from a terminal"
+    else
         log "building Noctalia $tag (a few minutes)"
         rm -rf "$src"
         git clone -q --depth 1 --branch "$tag" https://github.com/noctalia-dev/noctalia "$src"
         (cd "$src" && just configure release && just build release && just install release)
         echo "$tag" > /usr/local/share/noctalia/.version
-    else
-        log "Noctalia $tag is current"
     fi
+}
+
+step_devtools() {
+    log "Rust (rustup), Claude Code, Antigravity CLI, oh-my-pi"
+    # Each one updates itself afterwards (rustup update / claude auto-update / agy / omp installer re-run).
+    # A failure only warns: these come from external installers and must not break the system setup.
+    as_user mkdir -p "$UHOME/.local/bin"
+    [[ -x $UHOME/.cargo/bin/cargo ]] ||
+        as_user rustup-init -y --no-modify-path --profile default || warn "rustup-init failed"
+    [[ -x $UHOME/.local/bin/claude ]] ||
+        as_user bash -o pipefail -c 'curl -fsSL https://claude.ai/install.sh | bash' || warn "Claude Code install failed"
+    [[ -x $UHOME/.local/bin/agy ]] ||
+        as_user bash -o pipefail -c 'curl -fsSL https://antigravity.google/cli/install.sh | bash' ||
+        warn "Antigravity CLI install failed (needs AES-NI; in a VM pass the host CPU through)"
+    [[ -x $UHOME/.local/bin/omp ]] ||
+        as_user bash -o pipefail -c 'curl -fsSL https://omp.sh/install | sh -s -- --binary' || warn "oh-my-pi install failed"
 }
 
 step_finish() {
@@ -353,7 +455,7 @@ step_finish() {
 }
 
 steps=("$@")
-[[ ${#steps[@]} -eq 0 || ${steps[0]} == all ]] && steps=(base packages user security snapper login desktop apps finish)
+[[ ${#steps[@]} -eq 0 || ${steps[0]} == all ]] && steps=(base packages user security snapper login desktop apps devtools finish)
 for s in "${steps[@]}"; do
     declare -F "step_$s" >/dev/null || die "unknown step '$s'"
     "step_$s"

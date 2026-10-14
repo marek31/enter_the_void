@@ -11,6 +11,12 @@
 #   snapshots   snapper, root + home every 15 min; caches, logs, temp, swap, snapshots are separate
 #               subvolumes so they are never snapshotted; grub-btrfs lists snapshots in the boot menu
 #   desktop     Wayland only: niri + Noctalia shell (built from source), greetd + tuigreet login
+#   look        minimal: Kanagawa palette pushed by Noctalia to niri/foot/GTK/Qt/KDE/btop/starship,
+#               thin floating bar, single-accent focus ring, no borders, Inter + JetBrains Mono,
+#               Bibata cursor, Hokusai "Great Wave" wallpaper (public domain)
+#   dev         Go (xbps), Rust (rustup), Claude Code, Antigravity CLI (agy), oh-my-pi (omp)
+#   upkeep      browsers/Noctalia auto-update every 6 h, update notifications, monthly btrfs scrub,
+#               smartd, earlyoom, hibernate at 5 % battery, USB automount (udiskie)
 #   browsers    Helium (default) + Floorp, upstream tarballs in /opt, updated by `setup.sh apps`
 #   office      LibreOffice (Polish UI pack + spelling)
 #   printing    CUPS + cups-browsed + avahi (wifi/IPP Everywhere), sane-airscan for network scanners

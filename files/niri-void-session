@@ -1,0 +1,4 @@
+#!/bin/sh
+# niri session for runit systems (niri-session needs systemd). Started by greetd/tuigreet.
+export XDG_SESSION_TYPE=wayland XDG_CURRENT_DESKTOP=niri XDG_SESSION_DESKTOP=niri
+exec dbus-run-session niri --session

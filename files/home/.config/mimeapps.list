@@ -1,0 +1,7 @@
+[Default Applications]
+x-scheme-handler/http=helium.desktop
+x-scheme-handler/https=helium.desktop
+text/html=helium.desktop
+application/xhtml+xml=helium.desktop
+application/pdf=org.kde.okular.desktop
+inode/directory=thunar.desktop

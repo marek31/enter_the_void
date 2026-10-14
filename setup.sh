@@ -440,7 +440,14 @@ EOF
         log "building Noctalia $tag (a few minutes)"
         rm -rf "$src"
         git clone -q --depth 1 --branch "$tag" https://github.com/noctalia-dev/noctalia "$src"
-        (cd "$src" && just configure release && just build release && just install release)
+        # `just build` runs one C++ job per CPU thread (~0.7 GB each) and runs out of memory on small
+        # machines/VMs, so compile with a memory-sized job count; `just install` never recompiles.
+        local jobs; jobs=$(build_jobs)
+        log "compiling with $jobs parallel jobs (sized to free memory)"
+        (cd "$src" && just configure release &&
+            meson configure build-release -Db_lto_threads="$jobs" &&
+            meson compile -C build-release -j "$jobs" noctalia &&
+            just install release)
         echo "$tag" > /usr/local/share/noctalia/.version
     fi
 }
@@ -461,6 +468,13 @@ step_devtools() {
         as_user bash -o pipefail -c 'curl -fsSL https://omp.sh/install | sh -s -- --binary' || warn "oh-my-pi install failed"
 }
 
+build_jobs() { # parallel compile jobs that fit in RAM: ~1.5 GB per C++ job (estimate), between 1 and nproc
+    local n
+    n=$(awk '/^MemAvailable:/ {print int($2 / 1572864)}' /proc/meminfo)
+    (( n < 1 )) && n=1
+    (( n > $(nproc) )) && n=$(nproc)
+    echo "$n"
+}
 on_ac() { # true on mains power, or when there is no battery at all (desktop, VM)
     local p
     compgen -G '/sys/class/power_supply/BAT*' >/dev/null || return 0
@@ -525,7 +539,7 @@ step_kernel() {
 
     compgen -G "$vp/masterdir*" >/dev/null || as_user bash -c "cd '$vp' && ./xbps-src binary-bootstrap"
     log "building $pkg ${tver}_$trev (about an hour of compiling)"
-    as_user bash -c "cd '$vp' && nice -n 19 ./xbps-src -j$(nproc) pkg $pkg"
+    as_user bash -c "cd '$vp' && nice -n 19 ./xbps-src -j$(build_jobs) pkg $pkg"
     xbps-install -Sy --repository "$vp/hostdir/binpkgs" "$pkg"
     xbps-rindex -r "$vp/hostdir/binpkgs" >/dev/null 2>&1 || true
     as_user bash -c "cd '$vp' && ./xbps-src clean" >/dev/null 2>&1 || true

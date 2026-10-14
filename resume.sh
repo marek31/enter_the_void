@@ -26,8 +26,10 @@ fi
 for d in sys dev proc; do
     mountpoint -q "/mnt/$d" || { mount --rbind "/$d" "/mnt/$d"; mount --make-rslave "/mnt/$d"; }
 done
+# swap on, or compiling Noctalia/the kernel runs out of the live system's RAM
+if [[ -f /mnt/swap/swapfile ]] && ! grep -q /swap/swapfile /proc/swaps; then swapon /mnt/swap/swapfile; fi
 cp -L /etc/resolv.conf /mnt/etc/
 rm -rf /mnt/root/enter_void
 cp -r "$HERE" /mnt/root/enter_void
 chroot /mnt /root/enter_void/setup.sh "${@:-all}"
-echo "Done. When finished: umount -R /mnt; cryptsetup close cryptroot; reboot"
+echo "Done. When finished: swapoff -a; umount -R /mnt; cryptsetup close cryptroot; reboot"

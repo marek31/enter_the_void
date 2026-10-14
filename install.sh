@@ -178,11 +178,13 @@ cp -r "$HERE" /mnt/root/enter_void
 chroot /mnt /bin/bash -c "
     set -e
     btrfs filesystem mkswapfile --size ${SWAP_GIB}g /swap/swapfile
+    swapon /swap/swapfile   # compiling Noctalia needs more than the live system's RAM
     grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=Void
     /root/enter_void/setup.sh all
 "
 
 cp "$LOG" /mnt/var/log/
+swapoff /mnt/swap/swapfile 2>/dev/null || true
 umount -R /mnt || die "installed, but /mnt is busy: run 'umount -lR /mnt' and reboot"
 if [[ $ENCRYPT == yes ]]; then cryptsetup close cryptroot; fi
 log "done - remove the USB stick and reboot"

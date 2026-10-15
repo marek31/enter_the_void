@@ -58,7 +58,8 @@ If Windows ever boots straight to itself after an update, pick Void with F12 or 
 | Super+Space or Super+D | launcher (also the top icon on the bar) |
 | Super+S / Super+, | control center / Noctalia settings |
 | Super+Return / B / Shift+B / E / A | foot / Helium / Floorp / Thunar / audio mixer |
-| Super+O | overview |
+| Super+O | overview (drag windows between workspaces) |
+| Super+Shift+Down / Up | move window to the workspace below / above |
 | Super+Alt+L | lock |
 | Super+Shift+/ | all key bindings |
 

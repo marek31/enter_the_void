@@ -186,6 +186,13 @@ binds {
     Mod+Ctrl+L     { move-column-right; }
     Mod+Ctrl+K     { move-window-up-or-to-workspace-up; }
     Mod+Ctrl+J     { move-window-down-or-to-workspace-down; }
+    // whole column straight to the workspace below / above (Ctrl variants move inside the column first)
+    Mod+Shift+Down { move-column-to-workspace-down; }
+    Mod+Shift+Up   { move-column-to-workspace-up; }
+    Mod+Shift+J    { move-column-to-workspace-down; }
+    Mod+Shift+K    { move-column-to-workspace-up; }
+    Mod+Page_Down  { focus-workspace-down; }
+    Mod+Page_Up    { focus-workspace-up; }
     Mod+Home { focus-column-first; }
     Mod+End  { focus-column-last; }
     Mod+Shift+Left  { focus-monitor-left; }

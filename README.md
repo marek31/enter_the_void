@@ -91,7 +91,7 @@ xu                         # update everything, wrapped in a snapper pre/post sn
 xi <pkg>                   # install, same snapshot wrapping
 snapper -c root list       # snapshots of /, also bootable from the grub menu
 sudo snapper-rollback N    # make snapshot N the new / (reboot afterwards)
-sudo ~/enter_void/setup.sh apps    # update Helium, Floorp, Resilio, fonts, Noctalia now (cron does it once a day)
+sudo ~/enter_void/setup.sh apps    # update Helium, Floorp, Resilio, fonts, Noctalia now (cron: once a day, on AC or above 50 % battery)
 ```
 
 After a `git pull` with look changes: `~/enter_void/refresh.sh` (normal runs never overwrite your dotfiles).

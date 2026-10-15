@@ -23,9 +23,9 @@ clipboard_enabled = true
 clipboard_history_max_entries = 200
 corner_radius_scale = 1.0
 
-# panels, launcher, OSD: fast (0.1 slow .. 4.0 fastest); enabled = false turns them off
+# panels, launcher, OSD: no animations. For fast ones: enabled = true, speed = 3.0 (0.1 slow .. 4.0 fastest)
 [shell.animation]
-enabled = true
+enabled = false
 speed = 3.0
 
 # single vertical bar on the left (no top or bottom bar)

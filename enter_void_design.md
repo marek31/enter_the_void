@@ -152,3 +152,4 @@ setup.sh steps: base (host, tz, locale, console), packages, user (groups, sudo, 
 - 2026-10-15: Noctalia Greeter under VMware uses software rendering (vmwgfx dmabuf import fails in wlroots).
 - 2026-10-15: back to tuigreet as the default login; Noctalia Greeter kept as an option (GREETER=noctalia).
 - 2026-10-15: animations super fast: niri slowdown 0.25, Noctalia [shell.animation] speed 3.0, lock 100 ms, wallpaper 300 ms.
+- 2026-10-15: animations off by default (niri `animations { off }`, Noctalia `[shell.animation] enabled = false`); lock/wallpaper fades kept at their minimum.

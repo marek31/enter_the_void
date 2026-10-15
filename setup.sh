@@ -270,6 +270,9 @@ default = "$USERNAME"
 default = "Niri (Void)"
 EOF
         cmd=$(command -v noctalia-greeter-session)
+        # VMware (vmwgfx): wlroots cannot import the greeter's GPU buffers ("Failed to close buffer handle",
+        # then a blank screen). Software rendering for the login screen only; niri itself is unaffected.
+        if in_vmware; then cmd="env WLR_RENDERER=pixman LIBGL_ALWAYS_SOFTWARE=1 $cmd"; fi
     else
         log "login: tuigreet (text)"
         install -d -o _greeter -g _greeter /var/cache/tuigreet

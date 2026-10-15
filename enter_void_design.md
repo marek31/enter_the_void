@@ -77,6 +77,7 @@
 - Building Noctalia with `just build` runs one C++ job per thread at ~0.5-0.7 GB each and got OOM-killed in a VM. setup.sh compiles with `meson compile -j N` (N = MemAvailable / 1.5 GB, also used for LTO and the kernel build), and the swapfile is switched on during the install and in resume.sh.
 - At shutdown elogind revokes the seat before runit stops niri, so niri logs DRM "page flip ... permission denied" warnings until it is killed. Harmless; niri-void-session sends niri's log to ~/.local/state/niri/<date>-niri.log (14 days kept) so it no longer shows on the console.
 - thermald needs Intel thermal zones; without them (VM) it exits and runit restarts it every 2 s, flooding socklog. setup.sh enables it only on Intel hardware with /sys/class/thermal/thermal_zone* and not under VMware.
+- Noctalia Greeter in VMware: its wlroots compositor fails to import the client's dmabuf on vmwgfx (`wlr_linux_dmabuf_v1: Failed to close buffer handle ... Invalid argument`, client disconnected, blank screen). Under VMware greetd runs it with `WLR_RENDERER=pixman LIBGL_ALWAYS_SOFTWARE=1`. Debug: put `env NOCTALIA_GREETER_LOG=/tmp/greeter.log WLR_LOG=debug` in front of the greetd command.
 - `sv` commands do nothing inside the chroot; services are enabled by symlinks in `/etc/runit/runsvdir/default`.
 
 ## To do later
@@ -148,3 +149,4 @@ setup.sh steps: base (host, tz, locale, console), packages, user (groups, sudo, 
 - 2026-10-15: daily app updates only on AC or with battery above 50 % (power-ok).
 - 2026-10-15: power-ok now means on AC AND battery above 80 % (daily app updates).
 - 2026-10-15: thermald only on real Intel hardware (crash loop in the VM).
+- 2026-10-15: Noctalia Greeter under VMware uses software rendering (vmwgfx dmabuf import fails in wlroots).

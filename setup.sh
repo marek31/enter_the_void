@@ -233,6 +233,32 @@ EOF
         'session    optional     pam_gnome_keyring.so auto_start' >> /etc/pam.d/greetd
 }
 
+# copy_dotfiles keep|replace: repo dotfiles -> home. keep = only missing files (normal runs);
+# replace = also overwrite changed ones, the old file goes to ~/.backup/<name> <date>.
+copy_dotfiles() {
+    local src dst stamp
+    stamp=$(date '+%F %H-%M-%S')
+    while IFS= read -r -d '' src; do
+        dst=$UHOME/${src#"$FILES/home/"}
+        if [[ -e $dst ]] && tpl "$src" | cmp -s - "$dst"; then continue; fi
+        if [[ -e $dst ]]; then
+            if [[ $1 == keep ]]; then log "kept your $dst (repo version differs)"; continue; fi
+            as_user mkdir -p "$UHOME/.backup"
+            as_user cp -a "$dst" "$UHOME/.backup/$(basename "$dst") $stamp"
+            log "replaced $dst (old one in ~/.backup)"
+        fi
+        as_user mkdir -p "$(dirname "$dst")"
+        tpl "$src" | as_user tee "$dst" >/dev/null
+    done < <(find "$FILES/home" -type f -print0)
+}
+
+# Not part of "all": take the repo's current dotfiles, e.g. after a git pull with look changes.
+step_dotfiles() {
+    log "dotfiles: replacing changed ones with the repo version"
+    copy_dotfiles replace
+    log "log out and back in (or: pkill noctalia; setsid -f noctalia) to see the changes"
+}
+
 step_desktop() {
     log "services, audio, power, fonts, theme, dotfiles"
     sv_enable dbus elogind polkitd NetworkManager bluetoothd chronyd cronie socklog-unix nanoklogd \
@@ -315,17 +341,7 @@ cursor-size=24
 EOF
     dconf update
 
-    # dotfiles: copied once, never overwrite what you changed
-    local src dst
-    while IFS= read -r -d '' src; do
-        dst=$UHOME/${src#"$FILES/home/"}
-        if [[ -e $dst ]]; then
-            tpl "$src" | cmp -s - "$dst" || log "kept your $dst (repo version differs)"
-        else
-            as_user mkdir -p "$(dirname "$dst")"
-            tpl "$src" | as_user tee "$dst" >/dev/null
-        fi
-    done < <(find "$FILES/home" -type f -print0)
+    copy_dotfiles keep
     as_user mkdir -p "$UHOME/Pictures/Screenshots" "$UHOME/Pictures/Wallpapers"
     # default wallpaper (public domain, Hokusai) - matches the Kanagawa palette
     local wp=$UHOME/Pictures/Wallpapers/great-wave.jpg

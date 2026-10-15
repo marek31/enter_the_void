@@ -55,7 +55,7 @@
 - Booting a snapshot from grub gives a read-only `/`. Use it to inspect, then `snapper-rollback N` + reboot.
 - The GitHub API allows 60 unauthenticated requests per hour; `setup.sh apps` uses about 5.
 - `nft -c` validates the ruleset at setup time; after hand edits run `sudo nft -c -f /etc/nftables.conf` before restarting.
-- Dotfiles are copied only when missing. To take a new repo version, delete your file and rerun `setup.sh desktop`.
+- Dotfiles are copied only when missing. `refresh.sh` (or `setup.sh dotfiles`) replaces changed ones with the repo version and backs the old ones up to `~/.backup/<name> <date>`; Noctalia re-adds its colour includes to niri/foot on restart.
 - VMs: firmware must be UEFI (VirtualBox: System > Enable EFI; Hyper-V: Generation 2 with Secure Boot off; virt-manager: choose UEFI before creating the VM, it can't be changed later) and 3D acceleration on, or niri has no GPU to render with.
 - install.sh refuses any disk with a mounted partition, so it can't wipe the system it runs on; it must run from the live ISO.
 - `exec > >(tee ...)` is asynchronous: without the EXIT trap that closes stdout and waits for tee, messages show up after the shell prompt.
@@ -87,3 +87,4 @@ setup.sh steps: base (host, tz, locale, console), packages, user (groups, sudo, 
 - 2026-10-15: first full VM run reached the apps step: fixed font unzip, AppArmor (no config file on Void), snapper TIMELINE_CREATE=no (no systemctl calls); added resume.sh to continue a half-finished install.
 - 2026-10-15: Noctalia build OOM in the VM: memory-sized job count, swap on during install/resume.
 - 2026-10-15: bar moved to the left edge (vertical), launcher button on the bar, Super+D as second launcher key (Super+Space is taken by Windows hosts).
+- 2026-10-15: refresh.sh + setup.sh step `dotfiles` to take repo dotfiles on a running system without copy-pasting commands.

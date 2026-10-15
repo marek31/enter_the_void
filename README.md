@@ -70,6 +70,8 @@ sudo snapper-rollback N    # make snapshot N the new / (reboot afterwards)
 sudo ~/enter_void/setup.sh apps    # update Helium, Floorp, Resilio, fonts, Noctalia now (cron does it every 6 h)
 ```
 
+After a `git pull` with look changes: `~/enter_void/refresh.sh` (normal runs never overwrite your dotfiles).
+
 `setup.sh` can be re-run any time, whole or per step: `base packages user security snapper login desktop apps devtools kernel finish`.
 Logs: `/var/log/enter_void/`.
 
@@ -80,6 +82,7 @@ Logs: `/var/log/enter_void/`.
 | `config.sh` | every decision: host, user, locale, keyboard, disk, snapshot policy, ports |
 | `packages.txt` | everything installed with xbps |
 | `install.sh` | live ISO -> partitions, LUKS, btrfs subvolumes, bootstrap, grub |
+| `refresh.sh` | on the running desktop: `git pull` + take the repo's dotfiles (old ones to `~/.backup`) + restart Noctalia |
 | `resume.sh` | live ISO -> re-enter the installed system and run setup.sh steps (after a failed install, or to repair) |
 | `setup.sh` | system config, services, hardening, snapper, desktop, upstream apps |
 | `files/` | configs copied to `/etc` and the home folder (dotfiles never overwrite your edits) |

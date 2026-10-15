@@ -1,7 +1,7 @@
 # enter_void
 
 Scripts that turn a blank ThinkPad X1 Carbon Gen 10 into `x1-void`: Void Linux, btrfs + snapper every 15 min,
-niri + Noctalia on Wayland, Helium + Floorp, LibreOffice, wifi printers and scanners, Resilio Sync and pCloud.
+niri + Noctalia on Wayland, Helium, Floorp, Firefox, Opera, LibreOffice, wifi printers and scanners, Resilio Sync and pCloud.
 No flatpak, no snap. All decisions are listed (and editable) in [config.sh](config.sh).
 
 ## Install
@@ -77,7 +77,7 @@ One grammar (Super = Mod), H/J/K/L and arrows interchangeable. `Super+Shift+/` s
 | Super+E / A / P | files / audio mixer / KeePassXC | Super+O | overview (drag windows between workspaces) |
 | Ctrl+Shift+Esc | task manager (btop) | Super+Tab / Super+` | previous workspace / previous window |
 | Alt+Tab | window switcher | Super+U / I, Page Down / Up | workspace below / above |
-| PrtSc / Ctrl / Alt / Shift +PrtSc | screenshot region / screen / window / annotate | Super+Shift+Page Down / Up | reorder workspaces |
+| PrtSc / Shift / Alt / Ctrl +PrtSc | screenshot whole screen / region / window / annotate | Super+Shift+Page Down / Up | reorder workspaces |
 | | | Super+Home / End (+Ctrl) | first / last column (move there) |
 | Super+Esc | lock | Super+Shift+Esc | power menu |
 | Super+Ctrl+Esc | pass all keys to the app (VM, remote desktop) | Super+Shift+E / P | quit niri / screens off |

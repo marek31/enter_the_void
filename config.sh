@@ -19,7 +19,8 @@
 #   dev         Go (xbps), Rust (rustup), Claude Code, Antigravity CLI (agy), oh-my-pi (omp)
 #   upkeep      browsers/Noctalia auto-update every 6 h, update notifications, monthly btrfs scrub,
 #               smartd, earlyoom, hibernate at 5 % battery, USB automount (udiskie)
-#   browsers    Helium (default) + Floorp, upstream tarballs in /opt, updated by `setup.sh apps`
+#   browsers    Helium (default) + Floorp: upstream tarballs in /opt, updated by `setup.sh apps`;
+#               Firefox + Opera (nonfree) from xbps
 #   office      LibreOffice (Polish UI pack + spelling)
 #   printing    CUPS + cups-browsed + avahi (wifi/IPP Everywhere), sane-airscan for network scanners
 #   sync        Resilio Sync and pCloud installed, never autostarted (run `resilio` / `pcloud`)

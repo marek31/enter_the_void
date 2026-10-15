@@ -40,7 +40,8 @@ sane sane-airscan simple-scan xsane
 # --- office ---
 libreoffice libreoffice-i18n-pl hunspell-pl hunspell-en hyphen-pl mythes-pl
 
-# --- browser runtime libs (Helium + Floorp come as upstream tarballs into /opt) ---
+# --- browsers: Firefox + Opera (nonfree repo) from xbps; Helium + Floorp as upstream tarballs into /opt ---
+firefox opera
 nss gtk+3 dbus-glib alsa-lib libcups fuse fuse3
 
 # --- fonts (all open licences, same files work on Windows) ---

@@ -20,7 +20,7 @@ vi config.sh          # optional: disk, swap size, scale, ...
 ./install.sh          # wipes the disk you pick; asks for the disk passphrase and the user password
 ```
 
-4. Reboot. After the grub menu the passphrase is asked once (about 2 s to unlock), then the Noctalia login screen.
+4. Reboot. After the grub menu the passphrase is asked once (about 2 s to unlock), then the text login (tuigreet).
 
 If install.sh stops during setup (network, a download), do not reinstall: fix the cause, `git pull`, then `./resume.sh` in the same live session. It mounts the installed system (asking for the passphrase if needed) and re-runs setup.sh inside it; every step is safe to repeat. `./resume.sh apps finish` runs only those steps.
 

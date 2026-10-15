@@ -102,7 +102,7 @@ Open items from the 2026-10-14/15 sessions. Tick them off here when done.
 - [ ] Decide on Polish vs English formats (currently Polish formats, English language).
 
 **Decisions still open (from the gap review)**
-- [x] Graphical login: Noctalia Greeter (2026-10-15). Still open: themed/hidden grub menu.
+- [ ] Graphical login: Noctalia Greeter is built in but OFF (`GREETER=tuigreet`): blank screen in VMware even with software rendering. Retry on the X1 (real Intel GPU) with `GREETER=noctalia` + `sudo ~/enter_void/setup.sh login`. Still open: themed/hidden grub menu.
 - [x] Screen recording: Noctalia Screen Recorder + gpu-screen-recorder (2026-10-15); annotation is Ctrl+PrtSc.
 - [ ] VPN plugins: `NetworkManager-openvpn`, `NetworkManager-openconnect`.
 - [x] Faster unlock: LUKS2 + plain /boot (2026-10-15) - needs a reinstall to take effect.
@@ -150,3 +150,4 @@ setup.sh steps: base (host, tz, locale, console), packages, user (groups, sudo, 
 - 2026-10-15: power-ok now means on AC AND battery above 80 % (daily app updates).
 - 2026-10-15: thermald only on real Intel hardware (crash loop in the VM).
 - 2026-10-15: Noctalia Greeter under VMware uses software rendering (vmwgfx dmabuf import fails in wlroots).
+- 2026-10-15: back to tuigreet as the default login; Noctalia Greeter kept as an option (GREETER=noctalia).

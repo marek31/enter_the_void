@@ -70,7 +70,7 @@ HOME_NOSNAP=(.cache .local/share/Trash .local/share/resilio-sync .pcloud)
 
 KERNEL_BORE=yes         # build + boot the BORE-patched kernel (first build ~1 h on AC power, needs ~25 GB free)
 
-GREETER=noctalia        # login screen: noctalia (graphical, built from source) or tuigreet (text)
+GREETER=tuigreet        # login screen: tuigreet (text, default) or noctalia (graphical; blank screen in VMware)
 
 SUDO_TIMEOUT_MIN=1440   # ask for the sudo password once per day
 RESILIO_PORT=55555      # fixed listening port, opened in the firewall

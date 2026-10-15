@@ -92,3 +92,4 @@ setup.sh steps: base (host, tz, locale, console), packages, user (groups, sudo, 
 - 2026-10-15: full key binding suite (140 binds, one grammar), floating scratch terminal, task manager, clipboard/emoji/power menu/DND/night light/caffeine keys; lock is now Super+Esc.
 - 2026-10-15: screenshots only on PrtSc (Shift+PrtSc = annotate); dropped Super+Shift+S and Super+Ctrl+S.
 - 2026-10-15: Firefox + Opera (Void nonfree) added; PrtSc = whole screen, Shift+PrtSc = region, Ctrl+PrtSc = annotate; refresh.sh also installs new packages.
+- 2026-10-15: sqlite, lazygit, typst, tinymist added.

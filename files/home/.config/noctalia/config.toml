@@ -67,13 +67,14 @@ blur_intensity = 0.7
 tint_intensity = 0.35
 transition = ["fade"]
 
+# lock after 60 min idle, screen off 1 min later
 [idle.behavior.lock]
-timeout = 300
+timeout = 3600
 action = "lock"
 enabled = true
 
 [idle.behavior.screen-off]
-timeout = 360
+timeout = 3660
 action = "screen_off"
 enabled = true
 

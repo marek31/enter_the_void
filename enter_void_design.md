@@ -75,6 +75,39 @@
 - Building Noctalia with `just build` runs one C++ job per thread at ~0.5-0.7 GB each and got OOM-killed in a VM. setup.sh compiles with `meson compile -j N` (N = MemAvailable / 1.5 GB, also used for LTO and the kernel build), and the swapfile is switched on during the install and in resume.sh.
 - `sv` commands do nothing inside the chroot; services are enabled by symlinks in `/etc/runit/runsvdir/default`.
 
+## To do later
+
+Open items from the 2026-10-14/15 sessions. Tick them off here when done.
+
+**Before / during the X1 install**
+- [ ] Windows (admin): run the reclaim script with `SetBIOSTimeUTC`, or the one `reg add ... RealTimeIsUniversal` line (README).
+- [ ] Back up the laptop. install.sh mode `free` is untested on real hardware: rehearse it in the VM first (README: fake the X1 layout with sfdisk).
+- [ ] Use a long passphrase (4-5 random words): `LUKS_ITER_MS=500` trades brute-force cost for boot speed.
+
+**After the first boot on the X1**
+- [ ] `fprintd-enroll`, then check fingerprint on sudo and the lock screen.
+- [ ] `fwupdmgr refresh && fwupdmgr update` (BIOS, fingerprint reader firmware).
+- [ ] BORE kernel: let cron build it on AC (~45-90 min, estimate), then `uname -r` ends in `-bore` and `sysctl kernel.sched_bore` = 1.
+- [ ] Printer Brother DCP-L2530DW (192.168.0.241 / BRW106FD982F34B.local): `lpstat -v` shows a queue, simple-scan finds the scanner. Fallback command in the chat log / README.
+- [ ] `cloud setup`, list folders in `~/.config/cloud-sync.conf`, `cloud sync -n` then `cloud sync`.
+- [ ] KDE Connect: pair the phone. If no tray icon, check the binary name (`ls /usr/bin | grep kdeconnect`) and fix `spawn-at-startup` in niri config.
+- [ ] RustDesk: check outgoing sessions; incoming control on Wayland may be limited.
+- [ ] Hibernation: `loginctl hibernate` once, confirm it resumes (resume offset from the swapfile).
+- [ ] Decide on Polish vs English formats (currently Polish formats, English language).
+
+**Decisions still open (from the gap review)**
+- [ ] Graphical login (Noctalia greeter) and a themed/hidden grub menu.
+- [ ] Screen recording / annotation: `gpu-screen-recorder` or `obs`, `satty`.
+- [ ] VPN plugins: `NetworkManager-openvpn`, `NetworkManager-openconnect`.
+- [ ] Faster unlock: LUKS2 + `/boot` on the ESP (~1-2 s) vs kernels inside snapshots (current).
+- [ ] Secure Boot with `sbctl` (own keys, sign grub + kernel).
+- [ ] Off-machine backups: target for restic (pCloud via rclone or an external disk) + schedule.
+- [ ] Tools offered but not added: `nodejs` + `mise`, `qemu`/`libvirt`/`virt-manager` (+ libvirtd service), `easyeffects` + `lsp-plugins` (X1 speakers), `psmisc`, PowerShell 7 (tarball), the rest of the dev list (git: delta/difftastic/git-absorb/tig, debug: gdb/lldb/valgrind/perf/hotspot, LSPs: clangd/gopls/ruff, shell: atuin/direnv/hyperfine/xh/yazi/...).
+
+**VM only**
+- [ ] `KERNEL_BORE=no` in /usr/local/lib/enter_void/config.sh (an hours-long build tells nothing new).
+- [ ] Bridged network adapter for printer / KDE Connect tests; more RAM/CPU for builds; `open-vm-tools` for display resizing (name unverified).
+
 ## Current functionality
 install.sh: disk wipe + LUKS1 + btrfs subvolumes + bootstrap + fstab + keyfile + grub, then setup.sh in a chroot.
 setup.sh steps: base (host, tz, locale, console), packages, user (groups, sudo, fingerprint for sudo), security, snapper, login, desktop (services, audio, TLP, fonts, dconf theme, dotfiles), apps (Helium, Floorp, Resilio, pCloud installer, fonts, cursor, Noctalia), devtools (rustup, Claude Code, agy, omp), kernel (BORE build, cron-driven), finish (initramfs + grub).
@@ -98,3 +131,4 @@ setup.sh steps: base (host, tz, locale, console), packages, user (groups, sudo, 
 - 2026-10-15: sqlite, lazygit, typst, tinymist added.
 - 2026-10-15: Deno (dev tools), RustDesk, KDE Connect (+ LAN-only firewall rule, applied live), snapshot; refresh.sh now also runs security, apps and devtools.
 - 2026-10-15: pCloud through rclone (`cloud` command, Thunar "Send to pCloud", launcher entry) instead of the pCloud app.
+- 2026-10-15: idle lock after 60 min (screen off 1 min later); "To do later" section added.

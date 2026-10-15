@@ -55,7 +55,7 @@ free)
     read -r fbytes DISK START END <<< "$FREE"
     ESP=$(lsblk -lnpo NAME,PARTTYPE "$DISK" | awk -v t="$ESP_TYPE" 'tolower($2) == t {print $1; exit}')
     [[ -n $ESP ]] || die "no EFI system partition on $DISK to share - use wipe mode or create one"
-    echo "Void gets a new $((fbytes >> 30)) GiB partition in the free space on $DISK."
+    echo "Void gets two new partitions in the $((fbytes >> 30)) GiB of free space on $DISK: /boot ($BOOT_MIB MiB) and the rest, encrypted."
     echo "The EFI partition $ESP is shared (grub is added next to Windows Boot Manager, nothing is formatted)."
     read -rp "Type yes to continue: " confirm
     [[ $confirm == yes ]] || die "aborted, nothing changed"
@@ -80,34 +80,44 @@ fi
 
 log "updating xbps on the live system"
 xbps-install -Syu -R "$REPO" xbps
-xbps-install -Sy -R "$REPO" btrfs-progs cryptsetup dosfstools util-linux
+xbps-install -Sy -R "$REPO" btrfs-progs cryptsetup dosfstools e2fsprogs util-linux
 
 if [[ $INSTALL_MODE == wipe ]]; then
     log "partitioning $DISK"
-    ESP=$(part 1); ROOT=$(part 2)
+    ESP=$(part 1); BOOT=$(part 2); ROOT=$(part 3)
     wipefs -af "$DISK"
     sfdisk -q "$DISK" <<EOF
 label: gpt
 size=${ESP_MIB}MiB, type=uefi, name=EFI
+size=${BOOT_MIB}MiB, type=linux, name=boot
 type=linux, name=void
 EOF
     udevadm settle
     mkfs.vfat -F32 -n EFI "$ESP"
 else
-    log "adding the Void partition in the free space on $DISK"
-    START=$(( (START + 2047) / 2048 * 2048 ))   # 1 MiB alignment
-    SIZE=$(( (END - START + 1) / 2048 * 2048 ))
-    before=$(lsblk -lnpo NAME "$DISK" | sort)
-    echo "start=$START, size=$SIZE, type=linux, name=void" | sfdisk -q --append "$DISK"
-    udevadm settle
-    ROOT=$(comm -13 <(echo "$before") <(lsblk -lnpo NAME "$DISK" | sort))
-    [[ -b $ROOT ]] || die "could not find the new partition on $DISK"
-    log "new partition: $ROOT"
+    log "adding /boot and the Void partition in the free space on $DISK"
+    # new_part <start> <size> <name>: append a partition, print its device
+    new_part() {
+        local before
+        before=$(lsblk -lnpo NAME "$DISK" | sort)
+        echo "start=$1, size=$2, type=linux, name=$3" | sfdisk -q --append "$DISK"
+        udevadm settle
+        comm -13 <(echo "$before") <(lsblk -lnpo NAME "$DISK" | sort)
+    }
+    SS=$(blockdev --getss "$DISK")
+    START=$(( (START + 2047) / 2048 * 2048 ))   # 1 MiB alignment (512-byte sectors; coarser on 4K)
+    BOOT_SECT=$(( BOOT_MIB * 1048576 / SS ))
+    SIZE=$(( (END - START - BOOT_SECT + 1) / 2048 * 2048 ))
+    BOOT=$(new_part "$START" "$BOOT_SECT" boot)
+    ROOT=$(new_part "$((START + BOOT_SECT))" "$SIZE" void)
+    [[ -b $BOOT && -b $ROOT ]] || die "could not find the new partitions on $DISK"
+    log "new partitions: $BOOT (/boot), $ROOT (Void)"
 fi
+mkfs.ext4 -q -F -L boot "$BOOT"
 
 if [[ $ENCRYPT == yes ]]; then
-    log "encrypting $ROOT (LUKS1 so grub can unlock /boot)"
-    printf '%s' "$PASS" | cryptsetup luksFormat --type luks1 --iter-time "$LUKS_ITER_MS" -q --key-file=- "$ROOT"
+    log "encrypting $ROOT (LUKS2, argon2id; the initramfs asks for the passphrase)"
+    printf '%s' "$PASS" | cryptsetup luksFormat --type luks2 --pbkdf argon2id --iter-time "$LUKS_ITER_MS" -q --key-file=- "$ROOT"
     printf '%s' "$PASS" | cryptsetup open --allow-discards --key-file=- "$ROOT" cryptroot
     DEV=/dev/mapper/cryptroot
 else
@@ -129,7 +139,9 @@ for sv in "${SUBVOLS[@]:1}"; do
     mount -o "$BTRFS_OPTS,subvol=${sv%%:*}" "$DEV" "/mnt${sv#*:}"
 done
 # /btrfsroot stays an empty mount point: snapper-rollback mounts the top level there only while rolling back.
-mkdir -p /mnt/btrfsroot /mnt/boot/efi
+mkdir -p /mnt/btrfsroot /mnt/boot
+mount "$BOOT" /mnt/boot
+mkdir -p /mnt/boot/efi
 mount "$ESP" /mnt/boot/efi
 (( $(df --output=avail -m /mnt/boot/efi | tail -n1) >= 16 )) || die "EFI partition $ESP has less than 16 MB free for grub"
 chmod 1777 /mnt/var/tmp
@@ -142,10 +154,12 @@ XBPS_ARCH=x86_64 xbps-install -Sy -r /mnt -R "$REPO" base-system btrfs-progs cry
 log "writing fstab"
 FS_UUID=$(blkid -s UUID -o value "$DEV")
 ESP_UUID=$(blkid -s UUID -o value "$ESP")
+BOOT_UUID=$(blkid -s UUID -o value "$BOOT")
 {
     for sv in "${SUBVOLS[@]}"; do
         echo "UUID=$FS_UUID ${sv#*:} btrfs $BTRFS_OPTS,subvol=${sv%%:*} 0 0"
     done
+    echo "UUID=$BOOT_UUID /boot ext4 defaults,noatime 0 2"
     echo "UUID=$ESP_UUID /boot/efi vfat defaults,umask=0077 0 2"
     echo "tmpfs /tmp tmpfs defaults,nosuid,nodev,mode=1777 0 0"
     echo "/swap/swapfile none swap defaults 0 0"
@@ -154,15 +168,9 @@ ESP_UUID=$(blkid -s UUID -o value "$ESP")
 CMDLINE="loglevel=4 apparmor=1 security=apparmor zswap.enabled=0"   # swap = plain swapfile, no RAM compression
 mkdir -p /mnt/etc/dracut.conf.d
 if [[ $ENCRYPT == yes ]]; then
-    log "keyfile so the passphrase is asked only once (by grub)"
+    # /boot is not encrypted, so grub needs no key; the initramfs asks once (no keyfile anywhere)
     LUKS_UUID=$(blkid -s UUID -o value "$ROOT")
-    dd bs=512 count=4 if=/dev/urandom of=/mnt/boot/cryptroot.key iflag=fullblock status=none
-    chmod 000 /mnt/boot/cryptroot.key
-    # The keyfile is 2 KiB of random data, so stretching adds nothing: minimum iterations = instant unlock in the initramfs.
-    cryptsetup luksAddKey --pbkdf-force-iterations 1000 --key-file=<(printf '%s' "$PASS") "$ROOT" /mnt/boot/cryptroot.key
-    echo "cryptroot UUID=$LUKS_UUID /boot/cryptroot.key luks,discard" > /mnt/etc/crypttab
-    echo 'install_items+=" /boot/cryptroot.key /etc/crypttab "' > /mnt/etc/dracut.conf.d/10-crypt.conf
-    echo 'GRUB_ENABLE_CRYPTODISK=y' >> /mnt/etc/default/grub
+    echo "cryptroot UUID=$LUKS_UUID none luks,discard" > /mnt/etc/crypttab
     CMDLINE+=" rd.luks.uuid=$LUKS_UUID rd.luks.allow-discards"
 fi
 sed -i "s|^GRUB_CMDLINE_LINUX_DEFAULT=.*|GRUB_CMDLINE_LINUX_DEFAULT=\"$CMDLINE\"|" /mnt/etc/default/grub

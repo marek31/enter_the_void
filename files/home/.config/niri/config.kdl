@@ -191,11 +191,14 @@ binds {
     Mod+Shift+P      { power-off-monitors; }
     Mod+Shift+E      { quit; }
 
-    // --- screenshots: all on PrtSc ---
+    // --- screenshots and recording: all on PrtSc ---
     Print            hotkey-overlay-title="Screenshot whole screen" { screenshot-screen; }
     Shift+Print      hotkey-overlay-title="Screenshot region" { screenshot; }
     Alt+Print        hotkey-overlay-title="Screenshot window" { screenshot-window; }
     Ctrl+Print       hotkey-overlay-title="Screenshot + annotate" { spawn-sh "noctalia msg screenshot-annotate"; }
+    // screen recording (Noctalia Screen Recorder plugin, gpu-screen-recorder); saved to the plugin's output folder
+    Mod+Print        hotkey-overlay-title="Record screen start/stop" { spawn-sh "noctalia msg plugin noctalia/screen_recorder:service all toggle"; }
+    Mod+Shift+Print  hotkey-overlay-title="Record region" { spawn-sh "noctalia msg plugin noctalia/screen_recorder:service all start region"; }
 
     // --- focus: Mod + dir ---
     Mod+H     { focus-column-or-monitor-left; }

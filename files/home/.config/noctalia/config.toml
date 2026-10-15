@@ -90,3 +90,8 @@ border = false
 
 [dock]
 enabled = false
+
+# screen recording (gpu-screen-recorder): Super+PrtSc start/stop, Super+Shift+PrtSc region.
+# Codec, quality, output folder: Settings > Plugins > Screen Recorder.
+[plugins]
+enabled = ["noctalia/screen_recorder"]

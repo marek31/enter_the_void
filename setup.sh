@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Stage 2 - run as root, inside the install chroot (install.sh does it) or later on the running system.
 # Safe to re-run. Usage: sudo ./setup.sh [all | step...]
-# Steps: base packages user security snapper login desktop apps devtools kernel finish   (e.g. `sudo ./setup.sh apps`)
+# Steps: base packages user security snapper desktop apps login devtools kernel finish   (e.g. `sudo ./setup.sh apps`)
 set -euo pipefail
 HERE=$(cd "$(dirname "$0")" && pwd)
 # shellcheck source=config.sh
@@ -217,18 +217,65 @@ PATH=/usr/local/bin:/usr/bin:/usr/sbin:/bin
 EOF
 }
 
+# Noctalia Greeter has no releases yet: build its main branch (only when it changed). 0 = installed.
+build_greeter() {
+    local src=/var/cache/noctalia-greeter-src head jobs
+    head=$(git ls-remote https://github.com/noctalia-dev/noctalia-greeter HEAD 2>/dev/null | cut -f1)
+    [[ -n $head ]] || { warn "Noctalia Greeter: GitHub unreachable"; command -v noctalia-greeter-session >/dev/null; return; }
+    mkdir -p /var/lib/enter_void
+    [[ $(cat /var/lib/enter_void/greeter.version 2>/dev/null) == "$head" ]] && return 0
+    log "building Noctalia Greeter ${head:0:8}"
+    rm -rf "$src"
+    git clone -q --depth 1 https://github.com/noctalia-dev/noctalia-greeter "$src"
+    jobs=$(build_jobs)
+    if (cd "$src" && meson setup build-release --prefix=/usr --buildtype=release &&
+        meson compile -C build-release -j "$jobs" && meson install -C build-release); then
+        echo "$head" > /var/lib/enter_void/greeter.version
+    else
+        warn "Noctalia Greeter build failed"
+        return 1
+    fi
+}
+
+# Login screen: Noctalia Greeter (graphical, matches the shell) or tuigreet (text) as the fallback.
 step_login() {
-    log "greetd + tuigreet -> niri"
     put 755 /usr/local/bin/niri-void-session < "$FILES/niri-void-session"
+    # what the greeter offers: niri's own niri.desktop runs niri-session, which needs systemd
+    put 644 /usr/local/share/wayland-sessions/niri-void.desktop <<'EOF'
+[Desktop Entry]
+Name=Niri (Void)
+Comment=niri + Noctalia, runit session
+Exec=/usr/local/bin/niri-void-session
+Type=Application
+DesktopNames=niri
+EOF
+    local cmd
+    if [[ $GREETER == noctalia ]] && build_greeter && command -v noctalia-greeter-session >/dev/null; then
+        log "login: Noctalia Greeter"
+        install -d -o _greeter -g _greeter -m 750 /var/lib/noctalia-greeter
+        GREETER_USER=_greeter noctalia-greeter-apply-appearance --setup-system || warn "greeter appearance setup failed"
+        put 644 /var/lib/noctalia-greeter/greeter.toml <<EOF
+[user]
+default = "$USERNAME"
+
+[session]
+default = "Niri (Void)"
+EOF
+        cmd=$(command -v noctalia-greeter-session)
+    else
+        log "login: tuigreet (text)"
+        install -d -o _greeter -g _greeter /var/cache/tuigreet
+        cmd="tuigreet --time --remember --asterisks --greeting '$HOSTNAME' --cmd /usr/local/bin/niri-void-session"
+    fi
+    # takes effect at the next login; greetd is not restarted under a running session
     put 644 /etc/greetd/config.toml <<EOF
 [terminal]
 vt = 7
 
 [default_session]
-command = "tuigreet --time --remember --asterisks --greeting '$HOSTNAME' --cmd /usr/local/bin/niri-void-session"
+command = "$cmd"
 user = "_greeter"
 EOF
-    install -d -o _greeter -g _greeter /var/cache/tuigreet
     # unlock gnome-keyring with the login password
     grep -q pam_gnome_keyring /etc/pam.d/greetd || printf '%s\n' \
         'auth       optional     pam_gnome_keyring.so' \
@@ -585,11 +632,12 @@ step_kernel() {
 step_finish() {
     log "rebuilding initramfs + grub menu"
     xbps-reconfigure -fa
-    find /boot -xdev -exec chmod g-rwx,o-rwx {} +   # the initramfs holds the LUKS keyfile (-xdev: skip the vfat ESP)
+    # installs from before 2026-10-15 keep a LUKS keyfile inside the initramfs: keep /boot private there
+    if [[ -f /boot/cryptroot.key ]]; then find /boot -xdev -exec chmod g-rwx,o-rwx {} +; fi
 }
 
 steps=("$@")
-[[ ${#steps[@]} -eq 0 || ${steps[0]} == all ]] && steps=(base packages user security snapper login desktop apps devtools kernel finish)
+[[ ${#steps[@]} -eq 0 || ${steps[0]} == all ]] && steps=(base packages user security snapper desktop apps login devtools kernel finish)
 for s in "${steps[@]}"; do
     declare -F "step_$s" >/dev/null || die "unknown step '$s'"
     "step_$s"

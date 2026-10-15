@@ -15,10 +15,10 @@
 - Automatic off-machine backups: restic + rclone are installed, but the target (pCloud, external disk) is not decided yet.
 
 ## Decisions (ADR)
-- **Disk layout (frozen after install):** GPT, 1 GiB ESP at `/boot/efi`, LUKS1 on the rest, btrfs with flat subvolumes `@ @home @snapshots @var_log @var_cache @var_tmp @swap`, top level mounted at `/btrfsroot` only by snapper-rollback (`dev=` in its config). `/boot` sits inside `@`, so a snapshot always holds a matching kernel + modules. Changing it means reinstalling.
+- **Disk layout (frozen after install):** EFI partition at `/boot/efi` (1 GiB new, or Windows' shared one), 1 GiB ext4 `/boot` (not encrypted), LUKS2 on the rest, btrfs with flat subvolumes `@ @home @snapshots @var_log @var_cache @var_tmp @swap`, top level mounted at `/btrfsroot` only by snapper-rollback (`dev=` in its config). Changing it means reinstalling.
 - **Install modes:** `free` (X1, dual boot) creates one partition in the largest unallocated area (>= `MIN_FREE_GIB`) with `sfdisk --append`, 1 MiB aligned, and shares the existing EFI partition without formatting it; grub goes to `EFI\Void`, `--removable` is not used so `EFI\Boot\bootx64.efi` (Windows fallback) stays. `GRUB_DISABLE_OS_PROBER=false` + os-prober put Windows Boot Manager in the menu. `wipe` (VM, blank disk) creates a fresh GPT with a 1 GiB EFI partition. Only disks with nothing mounted are offered in either mode.
 - **Swap:** a plain swapfile `/swap/swapfile` (`btrfs filesystem mkswapfile`, size `SWAP_GIB`), no swap partition, no zram, and `zswap.enabled=0` on the kernel command line so the kernel does no RAM compression. The file sits in its own `@swap` subvolume because btrfs can't snapshot a subvolume holding an active swapfile.
-- **LUKS1, not LUKS2:** grub can only unlock LUKS2 with PBKDF2 and is unreliable with it. A keyfile in the initramfs (`/boot/cryptroot.key`, mode 000, `/boot` chmod go-rwx) means the passphrase is typed once, at grub.
+- **LUKS2 + plain /boot (since 2026-10-15; replaces LUKS1 + /boot inside the encrypted root):** grub no longer unlocks anything, so the 10-30 s PBKDF2 wait at grub is gone; the initramfs asks once and argon2id unlocks in ~2 s (`LUKS_ITER_MS=2000`). Stronger KDF, no keyfile anywhere. Costs: kernel + initramfs are readable on disk (tampering needs physical access; Secure Boot would close that), and root snapshots no longer contain the kernel. Void keeps old kernels in /boot and /usr/lib/modules until `vkpurge`, so an older snapshot still finds its kernel: purge only kernels older than your oldest snapshot. A separate /boot is used instead of the ESP because Windows' 260 MB EFI partition is too small for 2-3 kernels with initramfs.
 - **Snapshots:** snapper has no timer on Void (no systemd, and the package ships no cron script). `/usr/local/bin/snapper-tick` runs from `/etc/cron.d` every 15 min: creates a timeline snapshot per config, then cleans up. `TIMELINE_MIN_AGE=3600` keeps the last hour at 15-min resolution, then hourly 24 / daily 7 / weekly 4 / monthly 3. Exclusion = separate subvolume (btrfs snapshots stop at subvolume boundaries); home exclusions are in `HOME_NOSNAP`.
 - **Root snapshots on `@snapshots`, not nested `/.snapshots`:** needed by `snapper-rollback`, which swaps `@` for a snapshot. Home uses snapper's default nested `/home/.snapshots`.
 - **grub-btrfs without its daemon:** a daemon would rerun grub-mkconfig every 15 minutes. snapper-tick refreshes the menu once an hour.
@@ -56,7 +56,7 @@
 - `hunspell-pl_PL`, `font-jetbrains-mono`, `adw-gtk3`, `mission-center`, `rustdesk` don't exist in the Void repos (checked 2026-10-14).
 
 ## Known gotchas
-- grub runs PBKDF2 several times slower than the kernel, so the unlock wait scales with `LUKS_ITER_MS` (cryptsetup default 2000 ms = 10-30 s at grub, worse in a VM). Default here is 500 ms, which needs a long passphrase. The keyfile slot uses the minimum 1000 iterations (random 2 KiB key, stretching adds nothing). Existing disks: `cryptsetup luksChangeKey --iter-time 500 /dev/sda2` (type the same passphrase twice).
+- Installs from before 2026-10-15 (LUKS1, /boot encrypted, keyfile in the initramfs) keep working and keep the grub wait; switching layouts needs a reinstall. On those, `cryptsetup luksChangeKey --iter-time 500 /dev/sda2` shortens the wait.
 - Booting a snapshot from grub gives a read-only `/`. Use it to inspect, then `snapper-rollback N` + reboot.
 - The GitHub API allows 60 unauthenticated requests per hour; `setup.sh apps` uses about 5.
 - `nft -c` validates the ruleset at setup time; after hand edits run `sudo nft -c -f /etc/nftables.conf` before restarting.
@@ -83,7 +83,7 @@ Open items from the 2026-10-14/15 sessions. Tick them off here when done.
 **Before / during the X1 install**
 - [ ] Windows (admin): run the reclaim script with `SetBIOSTimeUTC`, or the one `reg add ... RealTimeIsUniversal` line (README).
 - [ ] Back up the laptop. install.sh mode `free` is untested on real hardware: rehearse it in the VM first (README: fake the X1 layout with sfdisk).
-- [ ] Use a long passphrase (4-5 random words): `LUKS_ITER_MS=500` trades brute-force cost for boot speed.
+- [ ] Use a long passphrase (4-5 random words).
 
 **After the first boot on the X1**
 - [ ] `fprintd-enroll`, then check fingerprint on sudo and the lock screen.
@@ -97,10 +97,10 @@ Open items from the 2026-10-14/15 sessions. Tick them off here when done.
 - [ ] Decide on Polish vs English formats (currently Polish formats, English language).
 
 **Decisions still open (from the gap review)**
-- [ ] Graphical login (Noctalia greeter) and a themed/hidden grub menu.
-- [ ] Screen recording / annotation: `gpu-screen-recorder` or `obs`, `satty`.
+- [x] Graphical login: Noctalia Greeter (2026-10-15). Still open: themed/hidden grub menu.
+- [x] Screen recording: Noctalia Screen Recorder + gpu-screen-recorder (2026-10-15); annotation is Ctrl+PrtSc.
 - [ ] VPN plugins: `NetworkManager-openvpn`, `NetworkManager-openconnect`.
-- [ ] Faster unlock: LUKS2 + `/boot` on the ESP (~1-2 s) vs kernels inside snapshots (current).
+- [x] Faster unlock: LUKS2 + plain /boot (2026-10-15) - needs a reinstall to take effect.
 - [ ] Secure Boot with `sbctl` (own keys, sign grub + kernel).
 - [ ] Off-machine backups: target for restic (pCloud via rclone or an external disk) + schedule.
 - [ ] Tools offered but not added: `nodejs` + `mise`, `qemu`/`libvirt`/`virt-manager` (+ libvirtd service), `easyeffects` + `lsp-plugins` (X1 speakers), `psmisc`, PowerShell 7 (tarball), the rest of the dev list (git: delta/difftastic/git-absorb/tig, debug: gdb/lldb/valgrind/perf/hotspot, LSPs: clangd/gopls/ruff, shell: atuin/direnv/hyperfine/xh/yazi/...).
@@ -110,7 +110,7 @@ Open items from the 2026-10-14/15 sessions. Tick them off here when done.
 - [ ] Bridged network adapter for printer / KDE Connect tests; more RAM/CPU for builds; `open-vm-tools` for display resizing (name unverified).
 
 ## Current functionality
-install.sh: disk wipe + LUKS1 + btrfs subvolumes + bootstrap + fstab + keyfile + grub, then setup.sh in a chroot.
+install.sh: wipe or free-space mode, ESP + plain /boot + LUKS2, btrfs subvolumes, bootstrap, fstab, grub, then setup.sh in a chroot.
 setup.sh steps: base (host, tz, locale, console), packages, user (groups, sudo, fingerprint for sudo), security, snapper, login, desktop (services, audio, TLP, fonts, dconf theme, dotfiles), apps (Helium, Floorp, Resilio, pCloud installer, fonts, cursor, Noctalia), devtools (rustup, Claude Code, agy, omp), kernel (BORE build, cron-driven), finish (initramfs + grub).
 
 ## Changelog
@@ -134,3 +134,4 @@ setup.sh steps: base (host, tz, locale, console), packages, user (groups, sudo, 
 - 2026-10-15: pCloud through rclone (`cloud` command, Thunar "Send to pCloud", launcher entry) instead of the pCloud app.
 - 2026-10-15: idle lock after 60 min (screen off 1 min later); "To do later" section added.
 - 2026-10-15: TLP profiles: balanced on AC, power-saver on battery, performance on demand.
+- 2026-10-15: LUKS2 (argon2id) + unencrypted 1 GiB /boot instead of LUKS1 + keyfile (no grub unlock wait); Noctalia Greeter login; screen recording (Super+PrtSc).

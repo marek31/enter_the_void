@@ -20,7 +20,7 @@ vi config.sh          # optional: disk, swap size, scale, ...
 ./install.sh          # wipes the disk you pick; asks for the disk passphrase and the user password
 ```
 
-4. Reboot. grub asks for the disk passphrase once, tuigreet starts niri.
+4. Reboot. After the grub menu the passphrase is asked once (about 2 s to unlock), then the Noctalia login screen.
 
 If install.sh stops during setup (network, a download), do not reinstall: fix the cause, `git pull`, then `./resume.sh` in the same live session. It mounts the installed system (asking for the passphrase if needed) and re-runs setup.sh inside it; every step is safe to repeat. `./resume.sh apps finish` runs only those steps.
 
@@ -79,7 +79,8 @@ One grammar (Super = Mod), H/J/K/L and arrows interchangeable. `Super+Shift+/` s
 | Super+E / A / P | files / audio mixer / KeePassXC | Super+O | overview (drag windows between workspaces) |
 | Ctrl+Shift+Esc | task manager (btop) | Super+Tab / Super+` | previous workspace / previous window |
 | Alt+Tab | window switcher | Super+U / I, Page Down / Up | workspace below / above |
-| PrtSc / Shift / Alt / Ctrl +PrtSc | screenshot whole screen / region / window / annotate | Super+Shift+Page Down / Up | reorder workspaces |
+| PrtSc / Shift / Alt / Ctrl +PrtSc | screenshot whole screen / region / window / annotate |
+| Super+PrtSc / Super+Shift+PrtSc | record screen (start/stop) / record region | | | Super+Shift+Page Down / Up | reorder workspaces |
 | | | Super+Home / End (+Ctrl) | first / last column (move there) |
 | Super+Esc | lock | Super+Shift+Esc | power menu |
 | Super+Ctrl+Esc | pass all keys to the app (VM, remote desktop) | Super+Shift+E / P | quit niri / screens off |

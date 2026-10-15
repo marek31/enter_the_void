@@ -7,7 +7,8 @@
 #               AX211 wifi, SOF audio, Synaptics 06cb:00fc fingerprint reader, USB4/Thunderbolt
 #   disk        X1: dual boot - Void goes into the 97 GiB unallocated between C: and Windows Recovery,
 #               sharing Windows' 260 MB EFI partition (grub next to Windows Boot Manager, os-prober menu).
-#               VM/blank disk: GPT, 1 GiB EFI + rest. Either way LUKS1 (grub can unlock it) + btrfs
+#               VM/blank disk: GPT, 1 GiB EFI + 1 GiB /boot + rest. Either way /boot is plain ext4 and the
+#               rest LUKS2 (argon2id) + btrfs: the initramfs asks for the passphrase once, ~2 s, no grub wait
 #   swap        plain swapfile on disk (@swap subvolume, inside LUKS); no zram, zswap disabled
 #   btrfs       @ / @home / @snapshots / @var_log / @var_cache / @var_tmp / @swap, /tmp is tmpfs
 #   snapshots   snapper, root + home every 15 min; caches, logs, temp, swap, snapshots are separate
@@ -51,10 +52,9 @@ INSTALL_MODE=""         # free = new partition in the largest unallocated area, 
                         # wipe = erase a whole disk; empty = install.sh asks (default free if there is space)
 MIN_FREE_GIB=40         # smallest unallocated area offered for "free"
 DISK=""                 # wipe mode only, e.g. /dev/nvme0n1; empty = install.sh asks
-ENCRYPT=yes             # yes = LUKS1 full disk encryption, no = plain btrfs
-LUKS_ITER_MS=500        # passphrase stretching, measured at Linux speed; grub is several times slower.
-                        # cryptsetup default 2000 = long wait at grub. Lower = faster boot but cheaper
-                        # brute force, so use a long passphrase (4-5 random words).
+ENCRYPT=yes             # yes = LUKS2 encryption of everything except /boot, no = plain btrfs
+LUKS_ITER_MS=2000       # argon2id unlock time (Linux does it, not grub): ~2 s at boot, cryptsetup default
+BOOT_MIB=1024           # unencrypted /boot (kernels + initramfs; Void keeps old kernels until vkpurge)
 ESP_MIB=1024
 SWAP_GIB=16             # = RAM
 BTRFS_OPTS="noatime,compress=zstd:1"
@@ -69,6 +69,8 @@ SNAP_KEEP_MONTHLY=3
 HOME_NOSNAP=(.cache .local/share/Trash .local/share/resilio-sync .pcloud)
 
 KERNEL_BORE=yes         # build + boot the BORE-patched kernel (first build ~1 h on AC power, needs ~25 GB free)
+
+GREETER=noctalia        # login screen: noctalia (graphical, built from source) or tuigreet (text)
 
 SUDO_TIMEOUT_MIN=1440   # ask for the sudo password once per day
 RESILIO_PORT=55555      # fixed listening port, opened in the firewall

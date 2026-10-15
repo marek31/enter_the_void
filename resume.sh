@@ -18,7 +18,7 @@ if ! mountpoint -q /mnt; then
     mount -o subvol=@ "$dev" /mnt
     # the other subvolumes and the EFI partition, exactly as the installed fstab lists them
     while read -r src mp type opts _; do
-        [[ $src == \#* || $mp == / || ! $type =~ ^(btrfs|vfat)$ ]] && continue
+        [[ $src == \#* || $mp == / || ! $type =~ ^(btrfs|vfat|ext4)$ ]] && continue
         mkdir -p "/mnt$mp"
         mount -t "$type" -o "$opts" "$src" "/mnt$mp"
     done < /mnt/etc/fstab

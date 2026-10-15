@@ -72,7 +72,7 @@ meld kdiff3 krename ncmpcpp keepassxc restic rclone
 # --- shell and CLI tools ---
 fish-shell bash-completion starship eza bat ripgrep fd fzf zoxide tmux vim neovim mc nnn
 htop btop glances nmon iftop nmap speedtest-cli duf plocate lsof strace usbutils pciutils smartmontools
-curl wget rsync jq unzip zip 7zip xz zstd man-pages man-db tealdeer trash-cli acl bind-utils fastfetch
+curl wget rsync jq unzip zip 7zip xz zstd man-pages man-db tealdeer trash-cli acl bind-utils fastfetch psmisc
 
 # --- development ---
 # Rust comes through rustup (toolchain in ~/.cargo, set up by `setup.sh devtools`); Go from xbps.

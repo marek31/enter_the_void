@@ -105,7 +105,7 @@ Open items from the 2026-10-14/15 sessions. Tick them off here when done.
 - [x] Faster unlock: LUKS2 + plain /boot (2026-10-15) - needs a reinstall to take effect.
 - [ ] Secure Boot with `sbctl` (own keys, sign grub + kernel).
 - [ ] Off-machine backups: target for restic (pCloud via rclone or an external disk) + schedule.
-- [ ] Tools offered but not added: `nodejs` + `mise`, `qemu`/`libvirt`/`virt-manager` (+ libvirtd service), `psmisc`, PowerShell 7 (tarball), the rest of the dev list (git: delta/difftastic/git-absorb/tig, debug: gdb/lldb/valgrind/perf/hotspot, LSPs: clangd/gopls/ruff, shell: atuin/direnv/hyperfine/xh/yazi/...).
+- [ ] Tools offered but not added: `nodejs` + `mise`, `qemu`/`libvirt`/`virt-manager` (+ libvirtd service), PowerShell 7 (tarball), the rest of the dev list (git: delta/difftastic/git-absorb/tig, debug: gdb/lldb/valgrind/perf/hotspot, LSPs: clangd/gopls/ruff, shell: atuin/direnv/hyperfine/xh/yazi/...).
 
 **VM only**
 - [ ] `KERNEL_BORE=no` in /usr/local/lib/enter_void/config.sh (an hours-long build tells nothing new).
@@ -139,3 +139,4 @@ setup.sh steps: base (host, tz, locale, console), packages, user (groups, sudo, 
 - 2026-10-15: LUKS2 (argon2id) + unencrypted 1 GiB /boot instead of LUKS1 + keyfile (no grub unlock wait); Noctalia Greeter login; screen recording (Super+PrtSc).
 - 2026-10-15: X1 speakers: EasyEffects + Lenovo Dolby tuning converted on the device (step `speakers`); litecli, pgcli.
 - 2026-10-15: PDF and Markdown readers: sioyek, xournalpp, pdfarranger, poppler-utils, qpdf, ghostwriter (default for .md), glow.
+- 2026-10-15: psmisc (fuser, killall, pstree).

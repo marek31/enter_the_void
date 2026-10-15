@@ -94,7 +94,7 @@ Open items from the 2026-10-14/15 sessions. Tick them off here when done.
 - [ ] `fprintd-enroll`, then check fingerprint on sudo and the lock screen.
 - [ ] `fwupdmgr refresh && fwupdmgr update` (BIOS, fingerprint reader firmware).
 - [ ] BORE kernel: let cron build it on AC (~45-90 min, estimate), then `uname -r` ends in `-bore` and `sysctl kernel.sched_bore` = 1.
-- [ ] Printer Brother DCP-L2530DW (192.168.0.241 / BRW106FD982F34B.local): `lpstat -v` shows a queue, simple-scan finds the scanner. No queue? `sudo lpadmin -p Brother_DCP_L2530DW -E -v ipp://BRW106FD982F34B.local/ipp/print -m everywhere`
+- [ ] Wi-Fi printer: `lpstat -v` shows a queue, simple-scan finds the scanner. No queue? Find its `.local` name with `avahi-browse -rt _ipp._tcp`, then `sudo lpadmin -p Printer -E -v ipp://<name>.local/ipp/print -m everywhere`
 - [ ] `cloud setup`, list folders in `~/.config/cloud-sync.conf`, `cloud sync -n` then `cloud sync`.
 - [ ] KDE Connect: pair the phone. If no tray icon, check the binary name (`ls /usr/bin | grep kdeconnect`) and fix `spawn-at-startup` in niri config.
 - [ ] RustDesk: check outgoing sessions; incoming control on Wayland may be limited.
@@ -125,7 +125,7 @@ setup.sh steps: base (host, tz, locale, console), packages, user (groups, sudo, 
 - 2026-10-14: bluetooth audio (libspa-bluetooth: SBC/AAC/aptX/LDAC/LC3, wireplumber-elogind, blueman, battery levels, btusb kept out of TLP autosuspend); printers: network IPP queues auto-created (cups-browsed `CreateIPPPrinterQueues All`), ipp-usb service enabled, USB printers auto-added (system-config-printer-udev), user in lpadmin; qpwgraph + Mod+A mixer.
 - 2026-10-14: review fixes: Helium uses libsecret + VA-API; keyring registered on the session bus; /btrfsroot no longer mounted; auto-updates + update notices; earlyoom, udiskie, smartd, monthly scrub, updatedb pruning, snapper FREE_LIMIT; hibernation + battery-guard; turbo boost on battery; alsa-ucm-conf; default apps; keepassxc, restic, rclone; cliphist removed. Minimal look with one Noctalia palette (Kanagawa) everywhere, Bibata cursor, Great Wave wallpaper, starship prompt. Dev tools: rustup, Claude Code, Antigravity CLI, oh-my-pi.
 - 2026-10-14: faster boot: LUKS_ITER_MS=500 for the passphrase slot, minimum iterations for the keyfile slot, GRUB_TIMEOUT=2.
-- 2026-10-14: dual boot: install mode `free` (new partition in unallocated space, shared EFI partition, os-prober); X1 checked ready (97.1 GB free, Secure Boot/BitLocker/Fast Startup off).
+- 2026-10-14: dual boot: install mode `free` (new partition in unallocated space, shared EFI partition, os-prober); X1 disk checked (free space between C: and Recovery).
 - 2026-10-14: BORE scheduler kernel built from Void's template + CachyOS patch (step `kernel`, cron on AC); no-systemd recorded as a frozen decision.
 - 2026-10-15: first full VM run reached the apps step: fixed font unzip, AppArmor (no config file on Void), snapper TIMELINE_CREATE=no (no systemctl calls); added resume.sh to continue a half-finished install.
 - 2026-10-15: Noctalia build OOM in the VM: memory-sized job count, swap on during install/resume.

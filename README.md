@@ -26,8 +26,8 @@ If install.sh stops during setup (network, a download), do not reinstall: fix th
 
 ### Dual boot on the X1 (Windows stays)
 
-Checked on 2026-10-14: GPT disk with **97.1 GB unallocated** between C: and the Recovery partition, Secure Boot off,
-BitLocker off on C:, Fast Startup off. install.sh offers mode `free` there: it creates one partition in that gap,
+Before installing, make sure in Windows: the disk has free (unallocated) space, Secure Boot is off, BitLocker is off or you have its
+recovery key, Fast Startup is off. install.sh offers mode `free` there: it creates one partition in that gap,
 shares the 260 MB EFI partition (adds `EFI\Void` next to `EFI\Microsoft`, formats nothing) and puts Windows in the grub menu.
 
 Before installing, in an **admin** PowerShell on Windows (keeps the clock right when switching OSes, both then use UTC):

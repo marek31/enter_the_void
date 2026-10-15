@@ -69,7 +69,7 @@ One grammar (Super = Mod), H/J/K/L and arrows interchangeable. `Super+Shift+/` s
 | Key | Action | Key | Action |
 |---|---|---|---|
 | Super+Space, Super+D | launcher | Super+Q | close window |
-| Super+. | emoji | Super+F / Ctrl+F / M | maximise column / fill free width / maximise to edges |
+| Super+. | emoji | Super+F / Ctrl+F / M | maximise to edges (whole screen bar aside) / fill free width / maximise column (gaps kept) |
 | Super+V | clipboard history | Super+Shift+F / Alt+F | fullscreen / fullscreen inside the column |
 | Super+S | control center | Super+R / Shift+R / Ctrl+R | width presets / height presets / reset height |
 | Super+, | settings | Super+- / = (Shift: height) | narrower / wider by 10 % |

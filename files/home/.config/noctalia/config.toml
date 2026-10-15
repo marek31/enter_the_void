@@ -1,4 +1,4 @@
-# Noctalia v5 - x1-void. Minimal look: one palette everywhere, thin floating bar, few widgets.
+# Noctalia v5 - x1-void. Minimal look: one palette everywhere, thin edge-glued bar, few widgets.
 # Changes made in Settings (Mod+Comma) go to ~/.local/state/noctalia/settings.toml and win over this file.
 # Reference: https://docs.noctalia.dev/noctalia/configuration/
 
@@ -28,15 +28,15 @@ corner_radius_scale = 1.0
 enabled = false
 speed = 3.0
 
-# single vertical bar on the left (no top or bottom bar)
+# single thin vertical bar on the left, flush with the screen edge, full height, square corners
 [bar.main]
 position = "left"
-thickness = 38
+thickness = 30
 background_opacity = 0.80
 compositor_blur = true
-radius = 12
-margin_ends = 14
-margin_edge = 8
+radius = 0
+margin_ends = 0
+margin_edge = 0
 padding = 12
 widget_spacing = 4
 shadow = false

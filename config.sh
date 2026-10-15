@@ -15,7 +15,7 @@
 #               subvolumes so they are never snapshotted; grub-btrfs lists snapshots in the boot menu
 #   desktop     Wayland only: niri + Noctalia shell (built from source), greetd + tuigreet login
 #   look        minimal: Kanagawa palette pushed by Noctalia to niri/foot/GTK/Qt/KDE/btop/starship,
-#               thin floating bar, single-accent focus ring, no borders, Inter + JetBrains Mono,
+#               thin bar glued to the left edge, single-accent focus ring, no borders, Inter + JetBrains Mono,
 #               Bibata cursor, Hokusai "Great Wave" wallpaper (public domain)
 #   dev         Go (xbps), Rust (rustup), Deno, Claude Code, Antigravity CLI (agy), oh-my-pi (omp)
 #   remote      RustDesk (upstream package), Remmina; KDE Connect for the phone (LAN-only firewall rule)

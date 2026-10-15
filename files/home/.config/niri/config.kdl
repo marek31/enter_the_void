@@ -254,9 +254,9 @@ binds {
     Mod+R           { switch-preset-column-width; }
     Mod+Shift+R     { switch-preset-window-height; }
     Mod+Ctrl+R      { reset-window-height; }
-    Mod+F           { maximize-column; }
+    Mod+F           { maximize-window-to-edges; }   // whole screen except the bar: no gaps, no ring
     Mod+Ctrl+F      { expand-column-to-available-width; }
-    Mod+M           { maximize-window-to-edges; }
+    Mod+M           { maximize-column; }            // full-width column, gaps kept
     Mod+Shift+F     { fullscreen-window; }
     Mod+Alt+F       { toggle-windowed-fullscreen; }   // app thinks it's fullscreen, stays in its column
     Mod+C           { center-column; }

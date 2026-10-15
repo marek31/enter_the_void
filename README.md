@@ -53,15 +53,34 @@ If Windows ever boots straight to itself after an update, pick Void with F12 or 
 
 ## Daily use
 
-| Key | Action |
+One grammar (Super = Mod), H/J/K/L and arrows interchangeable. `Super+Shift+/` shows everything on screen.
+
+| Modifier + direction | Does |
 |---|---|
-| Super+Space or Super+D | launcher (also the top icon on the bar) |
-| Super+S / Super+, | control center / Noctalia settings |
-| Super+Return / B / Shift+B / E / A | foot / Helium / Floorp / Thunar / audio mixer |
-| Super+O | overview (drag windows between workspaces) |
-| Super+Shift+Down / Up | move window to the workspace below / above |
-| Super+Alt+L | lock |
-| Super+Shift+/ | all key bindings |
+| Super + dir | focus (crosses into the next workspace / monitor at the edge) |
+| Super+Ctrl + dir | move the window |
+| Super+Shift + dir | send the column: up/down = workspace above/below, left/right = other monitor |
+| Super+Alt + dir | resize (left/right = width, up/down = height) |
+| Super+1..9 / +Shift / +Ctrl | go to workspace / send column there / send only the window there |
+
+| Key | Action | Key | Action |
+|---|---|---|---|
+| Super+Space, Super+D | launcher | Super+Q | close window |
+| Super+. | emoji | Super+F / Ctrl+F / M | maximise column / fill free width / maximise to edges |
+| Super+V | clipboard history | Super+Shift+F / Alt+F | fullscreen / fullscreen inside the column |
+| Super+S | control center | Super+R / Shift+R / Ctrl+R | width presets / height presets / reset height |
+| Super+, | settings | Super+- / = (Shift: height) | narrower / wider by 10 % |
+| Super+N / Shift+N | do not disturb / dismiss notifications | Super+C / Ctrl+C | centre column / centre all visible |
+| Super+Ctrl+N / I / W / T | night light / keep awake / next wallpaper / dark-light | Super+[ / ] | pull window into / push out of the column |
+| Super+Return / Shift+Return | terminal / floating terminal | Super+W | tabs in the column |
+| Super+B / Shift+B | Helium / Floorp | Super+T / Shift+T | float-tile / jump between float and tile |
+| Super+E / A / P | files / audio mixer / KeePassXC | Super+O | overview (drag windows between workspaces) |
+| Ctrl+Shift+Esc | task manager (btop) | Super+Tab / Super+` | previous workspace / previous window |
+| Alt+Tab | window switcher | Super+U / I, Page Down / Up | workspace below / above |
+| Print / Ctrl / Alt, Super+Shift+S | screenshot region / screen / window | Super+Shift+Page Down / Up | reorder workspaces |
+| Super+Ctrl+S | screenshot + annotate | Super+Home / End (+Ctrl) | first / last column (move there) |
+| Super+Esc | lock | Super+Shift+Esc | power menu |
+| Super+Ctrl+Esc | pass all keys to the app (VM, remote desktop) | Super+Shift+E / P | quit niri / screens off |
 
 ```sh
 xu                         # update everything, wrapped in a snapper pre/post snapshot

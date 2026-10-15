@@ -5,7 +5,7 @@
 set -e
 cd "$(dirname "$0")"
 git pull --ff-only
-sudo ./setup.sh packages security apps login devtools dotfiles
+sudo ./setup.sh packages security apps login devtools speakers dotfiles
 pkill -x noctalia || true
 setsid -f noctalia >/dev/null 2>&1
 echo "done"

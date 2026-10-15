@@ -49,6 +49,7 @@ If Windows ever boots straight to itself after an update, pick Void with F12 or 
 | Look | Super+, -> Theme: pick another palette, or "wallpaper" to derive colours from the wallpaper; every app follows |
 | BORE kernel | built automatically after the first boot when on AC (about an hour), or now: `sudo ~/enter_void/setup.sh kernel`; check with `uname -r` (ends in `-bore`) |
 | Dev tools | `claude`, `agy` (Antigravity CLI), `omp` (oh-my-pi), `deno`, `cargo`/`rustup`, `go` - log in to each on first run |
+| Speakers | EasyEffects with Lenovo's Dolby tuning for this X1, made from the Windows driver on the first `refresh.sh` / `sudo ~/enter_void/setup.sh speakers` (needs the Windows partition) |
 | Phone | KDE Connect: install the KDE Connect app on the phone, same Wi-Fi, pair from the tray icon (firewall opens 1714-1764 to the LAN only) |
 | Remote desktop | `rustdesk` (start it when needed, no background service), Remmina for RDP/VNC |
 | Backups | snapshots are not backups: `restic` + `rclone` are installed, e.g. `restic -r rclone:pcloud:backup init` |

@@ -29,6 +29,7 @@
 - **KDE Connect:** started by niri (`kdeconnect-indicator`, since niri runs no XDG autostart); firewall opens 1714-1764 tcp/udp to private IPv4 ranges only.
 - **pCloud via rclone (default):** `cloud` wraps rclone 1.75: OAuth remote `pcloud:` (region set during login), `rclone mount` with full VFS cache at ~/pCloud on demand, `rclone bisync --resilient --recover --conflict-resolve newer --max-delete 25` for the folder pairs in ~/.config/cloud-sync.conf (first run per pair uses --resync, tracked in ~/.local/state/cloud), `rclone link` for share links. Nothing runs in the background; schedule with `crontab -e` if wanted. LibreOffice lock files and temp files are excluded.
 - **pCloud app (optional):** the only Linux build is an AppImage behind a per-session link, so it cannot be scripted. `pcloud-install` unpacks it into `/opt/pcloud` (no FUSE2 runtime needed to start it; `fuse`/`fuse3` are installed for its virtual drive).
+- **X1 speakers:** EasyEffects 8 (`--service-mode --hide-window`, started by niri) with a preset made by speaker-tuning-to-easyeffects (MIT) from Lenovo's own Dolby tuning for this machine (`DEV_0287_SUBSYS_17AA22E7_*.xml` in the Windows DriverStore). `setup.sh speakers` mounts the Windows partition read-only, converts, sets autoload for the internal speakers; the proprietary file never enters the repo. Runs on the live desktop only (needs PipeWire); no Windows partition -> skipped.
 - **Power profiles (TLP 1.10):** AC -> balanced (`_ON_BAT` values: balance_performance, platform balanced, boost on), battery -> power-saver (`_ON_SAV`: EPP power, platform low-power, no boost, CPU max 60 %, GPU boost 900 MHz, ASPM powersupersave), performance (`_ON_AC`) only by hand. Settings without `_SAV` variants use `_ON_BAT` in power-saver, so those are set to saving.
 - **Power:** TLP + tlp-pd (TLP's power-profiles D-Bus API, so Noctalia's profile switch works). It conflicts with power-profiles-daemon. thermald stays.
 - **Firewall:** nftables, inbound default drop; allowed: established, loopback, rate-limited ICMP, DHCPv6, mDNS from LAN (printer/scanner discovery), Resilio port 55555 and LAN discovery 3838. No sshd. Resilio WebUI only on 127.0.0.1, UPnP off.
@@ -86,6 +87,7 @@ Open items from the 2026-10-14/15 sessions. Tick them off here when done.
 - [ ] Use a long passphrase (4-5 random words).
 
 **After the first boot on the X1**
+- [ ] Speakers: `sudo ~/enter_void/setup.sh speakers` (if it did not run), then compare with EasyEffects bypassed; `python3 /var/cache/speaker-tuning/dolby_to_easyeffects.py --doctor` if it sounds unchanged.
 - [ ] `fprintd-enroll`, then check fingerprint on sudo and the lock screen.
 - [ ] `fwupdmgr refresh && fwupdmgr update` (BIOS, fingerprint reader firmware).
 - [ ] BORE kernel: let cron build it on AC (~45-90 min, estimate), then `uname -r` ends in `-bore` and `sysctl kernel.sched_bore` = 1.
@@ -103,7 +105,7 @@ Open items from the 2026-10-14/15 sessions. Tick them off here when done.
 - [x] Faster unlock: LUKS2 + plain /boot (2026-10-15) - needs a reinstall to take effect.
 - [ ] Secure Boot with `sbctl` (own keys, sign grub + kernel).
 - [ ] Off-machine backups: target for restic (pCloud via rclone or an external disk) + schedule.
-- [ ] Tools offered but not added: `nodejs` + `mise`, `qemu`/`libvirt`/`virt-manager` (+ libvirtd service), `easyeffects` + `lsp-plugins` (X1 speakers), `psmisc`, PowerShell 7 (tarball), the rest of the dev list (git: delta/difftastic/git-absorb/tig, debug: gdb/lldb/valgrind/perf/hotspot, LSPs: clangd/gopls/ruff, shell: atuin/direnv/hyperfine/xh/yazi/...).
+- [ ] Tools offered but not added: `nodejs` + `mise`, `qemu`/`libvirt`/`virt-manager` (+ libvirtd service), `psmisc`, PowerShell 7 (tarball), the rest of the dev list (git: delta/difftastic/git-absorb/tig, debug: gdb/lldb/valgrind/perf/hotspot, LSPs: clangd/gopls/ruff, shell: atuin/direnv/hyperfine/xh/yazi/...).
 
 **VM only**
 - [ ] `KERNEL_BORE=no` in /usr/local/lib/enter_void/config.sh (an hours-long build tells nothing new).
@@ -135,3 +137,4 @@ setup.sh steps: base (host, tz, locale, console), packages, user (groups, sudo, 
 - 2026-10-15: idle lock after 60 min (screen off 1 min later); "To do later" section added.
 - 2026-10-15: TLP profiles: balanced on AC, power-saver on battery, performance on demand.
 - 2026-10-15: LUKS2 (argon2id) + unencrypted 1 GiB /boot instead of LUKS1 + keyfile (no grub unlock wait); Noctalia Greeter login; screen recording (Super+PrtSc).
+- 2026-10-15: X1 speakers: EasyEffects + Lenovo Dolby tuning converted on the device (step `speakers`); litecli, pgcli.

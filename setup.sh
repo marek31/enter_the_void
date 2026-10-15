@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Stage 2 - run as root, inside the install chroot (install.sh does it) or later on the running system.
 # Safe to re-run. Usage: sudo ./setup.sh [all | step...]
-# Steps: base packages user security snapper desktop apps login devtools kernel finish   (e.g. `sudo ./setup.sh apps`)
+# Steps: base packages user security snapper desktop apps login devtools speakers kernel finish   (e.g. `sudo ./setup.sh apps`)
 set -euo pipefail
 HERE=$(cd "$(dirname "$0")" && pwd)
 # shellcheck source=config.sh
@@ -58,8 +58,14 @@ sv_disable() { local s; for s; do rm -f "/etc/runit/runsvdir/default/$s"; done; 
 # run as the desktop user with that user's HOME (runuser alone may keep root's HOME inside the chroot)
 in_chroot() { [[ $(stat -c %d:%i /) != "$(stat -c %d:%i /proc/1/root/. 2>/dev/null)" ]]; }
 as_user() {
-    (cd "$UHOME" && runuser -u "$USERNAME" -- env HOME="$UHOME" USER="$USERNAME" LOGNAME="$USERNAME" \
-        PATH="$UHOME/.local/bin:$UHOME/.cargo/bin:/usr/local/bin:/usr/bin:/usr/sbin:/bin" "$@")
+    local vars=(HOME="$UHOME" USER="$USERNAME" LOGNAME="$USERNAME"
+        PATH="$UHOME/.local/bin:$UHOME/.cargo/bin:/usr/local/bin:/usr/bin:/usr/sbin:/bin")
+    local rt
+    rt=/run/user/$(id -u "$USERNAME" 2>/dev/null || true)
+    [[ -d $rt ]] && vars+=(XDG_RUNTIME_DIR="$rt")   # running desktop: lets tools reach PipeWire
+    # without the SUDO_* variables: some tools refuse to run "under sudo"
+    (cd "$UHOME" && runuser -u "$USERNAME" -- env -u SUDO_USER -u SUDO_UID -u SUDO_GID -u SUDO_COMMAND \
+        "${vars[@]}" "$@")
 }
 # cmdline_set <key> [value]: put key[=value] on the grub kernel command line, replacing any old value
 cmdline_set() {
@@ -553,6 +559,30 @@ build_jobs() { # parallel compile jobs that fit in RAM: ~1.5 GB per C++ job (est
     (( n > $(nproc) )) && n=$(nproc)
     echo "$n"
 }
+# X1 speakers: Lenovo ships a Dolby speaker tuning for this exact laptop (codec 0287, subsystem 17AA22E7) in its
+# Windows driver. speaker-tuning-to-easyeffects (MIT) turns it into an EasyEffects preset that is loaded
+# automatically for the internal speakers. The proprietary file is read from the Windows partition (read-only)
+# and never copied into this repo. Needs the running desktop (PipeWire), so it is skipped in the install chroot.
+step_speakers() {
+    if in_chroot; then log "speakers: tuned after the first boot (sudo ~/enter_void/setup.sh speakers)"; return 0; fi
+    local win=/run/enter_void-windows part found="" src=/var/cache/speaker-tuning
+    mkdir -p "$win"
+    while read -r part; do
+        mountpoint -q "$win" || mount -t ntfs3 -o ro "$part" "$win" 2>/dev/null ||
+            mount -t ntfs-3g -o ro "$part" "$win" 2>/dev/null || continue
+        if [[ -d $win/Windows/System32/DriverStore ]]; then found=$part; break; fi
+        umount "$win"
+    done < <(lsblk -lnpo NAME,FSTYPE | awk '$2 == "ntfs" {print $1}')
+    if [[ -z $found ]]; then warn "speakers: no Windows partition with Lenovo's audio driver - skipped"; return 0; fi
+    log "speakers: Dolby tuning from $found"
+    install -d -o "$USERNAME" -g "$USERNAME" "$src"
+    if [[ -d $src/.git ]]; then as_user git -C "$src" pull -q --ff-only || true
+    else as_user git clone -q --depth 1 https://github.com/antoinecellerier/speaker-tuning-to-easyeffects "$src"; fi
+    as_user python3 "$src/dolby_to_easyeffects.py" --windows "$win" --autoload ||
+        warn "speakers: conversion failed - run it by hand: python3 $src/dolby_to_easyeffects.py --doctor"
+    umount "$win"
+}
+
 on_ac() { # true on mains power, or when there is no battery at all (desktop, VM)
     local p
     compgen -G '/sys/class/power_supply/BAT*' >/dev/null || return 0
@@ -637,7 +667,7 @@ step_finish() {
 }
 
 steps=("$@")
-[[ ${#steps[@]} -eq 0 || ${steps[0]} == all ]] && steps=(base packages user security snapper desktop apps login devtools kernel finish)
+[[ ${#steps[@]} -eq 0 || ${steps[0]} == all ]] && steps=(base packages user security snapper desktop apps login devtools speakers kernel finish)
 for s in "${steps[@]}"; do
     declare -F "step_$s" >/dev/null || die "unknown step '$s'"
     "step_$s"

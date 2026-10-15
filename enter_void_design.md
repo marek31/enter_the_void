@@ -29,6 +29,7 @@
 - **KDE Connect:** started by niri (`kdeconnect-indicator`, since niri runs no XDG autostart); firewall opens 1714-1764 tcp/udp to private IPv4 ranges only.
 - **pCloud via rclone (default):** `cloud` wraps rclone 1.75: OAuth remote `pcloud:` (region set during login), `rclone mount` with full VFS cache at ~/pCloud on demand, `rclone bisync --resilient --recover --conflict-resolve newer --max-delete 25` for the folder pairs in ~/.config/cloud-sync.conf (first run per pair uses --resync, tracked in ~/.local/state/cloud), `rclone link` for share links. Nothing runs in the background; schedule with `crontab -e` if wanted. LibreOffice lock files and temp files are excluded.
 - **pCloud app (optional):** the only Linux build is an AppImage behind a per-session link, so it cannot be scripted. `pcloud-install` unpacks it into `/opt/pcloud` (no FUSE2 runtime needed to start it; `fuse`/`fuse3` are installed for its virtual drive).
+- **Power profiles (TLP 1.10):** AC -> balanced (`_ON_BAT` values: balance_performance, platform balanced, boost on), battery -> power-saver (`_ON_SAV`: EPP power, platform low-power, no boost, CPU max 60 %, GPU boost 900 MHz, ASPM powersupersave), performance (`_ON_AC`) only by hand. Settings without `_SAV` variants use `_ON_BAT` in power-saver, so those are set to saving.
 - **Power:** TLP + tlp-pd (TLP's power-profiles D-Bus API, so Noctalia's profile switch works). It conflicts with power-profiles-daemon. thermald stays.
 - **Firewall:** nftables, inbound default drop; allowed: established, loopback, rate-limited ICMP, DHCPv6, mDNS from LAN (printer/scanner discovery), Resilio port 55555 and LAN discovery 3838. No sshd. Resilio WebUI only on 127.0.0.1, UPnP off.
 - **Hardening:** sysctl (kptr/dmesg restrict, no unprivileged BPF, ptrace scope 1, no redirects/source routes, rp_filter loose), AppArmor enforce, no core dumps, root account locked, NetworkManager random MAC for scans and a stable random MAC per network, IPv6 privacy addresses.
@@ -132,3 +133,4 @@ setup.sh steps: base (host, tz, locale, console), packages, user (groups, sudo, 
 - 2026-10-15: Deno (dev tools), RustDesk, KDE Connect (+ LAN-only firewall rule, applied live), snapshot; refresh.sh now also runs security, apps and devtools.
 - 2026-10-15: pCloud through rclone (`cloud` command, Thunar "Send to pCloud", launcher entry) instead of the pCloud app.
 - 2026-10-15: idle lock after 60 min (screen off 1 min later); "To do later" section added.
+- 2026-10-15: TLP profiles: balanced on AC, power-saver on battery, performance on demand.

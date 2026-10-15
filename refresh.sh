@@ -11,6 +11,15 @@ sudo ./setup.sh packages security apps login devtools speakers dotfiles
 # bar changes made in Settings (Mod+Comma) win over the repo's config.toml
 grep -Eqs '^\[(bar|widget)' ~/.local/state/noctalia/settings.toml &&
     echo "note: ~/.local/state/noctalia/settings.toml overrides the bar; remove its [bar...]/[widget...] sections to get the repo look"
+# restart only from inside the desktop: from a text console the new Noctalia has no display and dies
+if [ -z "$WAYLAND_DISPLAY" ]; then
+    echo "done - not inside niri, so Noctalia was not restarted (log out and back in to see changes)"
+    exit 0
+fi
+log=~/.local/state/noctalia/$(date '+%F')-noctalia.log
+mkdir -p "$(dirname "$log")"
 pkill -x noctalia || true
-setsid -f noctalia >/dev/null 2>&1
+setsid -f noctalia >>"$log" 2>&1
+sleep 3
+pgrep -x noctalia >/dev/null || { echo "Noctalia did not start - last lines of $log:"; tail -n 20 "$log"; exit 1; }
 echo "done"

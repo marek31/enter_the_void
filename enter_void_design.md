@@ -160,5 +160,6 @@ setup.sh steps: base (host, tz, locale, console), packages, user (groups, sudo, 
 - 2026-10-15: Noctalia weather off (`[weather] enabled = false`).
 - 2026-10-15: disk encryption off by default (`ENCRYPT=no`: no boot passphrase; a stolen disk is readable). LUKS2 path kept behind `ENCRYPT=yes`.
 - 2026-10-15: bar shows app icons per workspace: `taskbar` widget with `group_by_workspace` instead of `workspaces` (app names only work on horizontal bars).
+- 2026-10-15: refresh.sh restarts Noctalia only inside niri (`WAYLAND_DISPLAY` set), logs it to `~/.local/state/noctalia/<date>-noctalia.log` and reports when it fails to start (was: output to /dev/null, grey screen with no clue).
 - 2026-10-15: Num Lock off at login (dropped `numlock` from niri's keyboard input).
 - 2026-10-15: README install guide: ISO choice + checksum, Rufus DD mode, Windows prep (BitLocker, Fast Startup, shrink C:), BIOS, partition modes and config.sh options.

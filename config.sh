@@ -8,8 +8,9 @@
 #   disk        X1: dual boot - Void goes into the 97 GiB unallocated between C: and Windows Recovery,
 #               sharing Windows' 260 MB EFI partition (grub next to Windows Boot Manager, os-prober menu).
 #               VM/blank disk: GPT, 1 GiB EFI + 1 GiB /boot + rest. Either way /boot is plain ext4 and the
-#               rest LUKS2 (argon2id) + btrfs: the initramfs asks for the passphrase once, ~2 s, no grub wait
-#   swap        plain swapfile on disk (@swap subvolume, inside LUKS); no zram, zswap disabled
+#               rest btrfs, not encrypted (2026-10-15). ENCRYPT=yes puts LUKS2 (argon2id) under the btrfs:
+#               the initramfs then asks for the passphrase once, ~2 s, no grub wait
+#   swap        plain swapfile on disk (@swap subvolume); no zram, zswap disabled
 #   btrfs       @ / @home / @snapshots / @var_log / @var_cache / @var_tmp / @swap, /tmp is tmpfs
 #   snapshots   snapper, root + home every 15 min; caches, logs, temp, swap, snapshots are separate
 #               subvolumes so they are never snapshotted; grub-btrfs lists snapshots in the boot menu
@@ -17,7 +18,7 @@
 #   look        minimal: Kanagawa palette pushed by Noctalia to niri/foot/GTK/Qt/KDE/btop/starship,
 #               thin bar glued to the left edge, single-accent focus ring, no borders, Inter + JetBrains Mono,
 #               Bibata cursor, Hokusai "Great Wave" wallpaper (public domain)
-#   dev         Go (xbps), Rust (rustup), Deno, Claude Code, Antigravity CLI (agy), oh-my-pi (omp)
+#   dev         Go (xbps), Rust (rustup), Common Lisp (SBCL), Deno, Claude Code, Antigravity CLI (agy), oh-my-pi (omp)
 #   remote      RustDesk (upstream package), Remmina; KDE Connect for the phone (LAN-only firewall rule)
 #   upkeep      browsers/Noctalia auto-update once a day, update notifications, monthly btrfs scrub,
 #               smartd, earlyoom, hibernate at 5 % battery, USB automount (udiskie)
@@ -52,7 +53,7 @@ INSTALL_MODE=""         # free = new partition in the largest unallocated area, 
                         # wipe = erase a whole disk; empty = install.sh asks (default free if there is space)
 MIN_FREE_GIB=40         # smallest unallocated area offered for "free"
 DISK=""                 # wipe mode only, e.g. /dev/nvme0n1; empty = install.sh asks
-ENCRYPT=yes             # yes = LUKS2 encryption of everything except /boot, no = plain btrfs
+ENCRYPT=no              # no = plain btrfs, boots without a passphrase; yes = LUKS2 on everything except /boot
 LUKS_ITER_MS=2000       # argon2id unlock time (Linux does it, not grub): ~2 s at boot, cryptsetup default
 BOOT_MIB=1024           # unencrypted /boot (kernels + initramfs; Void keeps old kernels until vkpurge)
 ESP_MIB=1024

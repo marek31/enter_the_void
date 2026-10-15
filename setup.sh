@@ -149,7 +149,7 @@ step_security() {
     cmdline_set apparmor 1
     cmdline_set security apparmor
     cmdline_set zswap.enabled 0          # swap is a plain swapfile, no RAM compression
-    if [[ -f /swap/swapfile ]]; then     # hibernate into the swapfile (encrypted, inside LUKS)
+    if [[ -f /swap/swapfile ]]; then     # hibernate into the swapfile (encrypted only with ENCRYPT=yes)
         cmdline_set resume "UUID=$(findmnt -no UUID -T /swap/swapfile)"
         cmdline_set resume_offset "$(btrfs inspect-internal map-swapfile -r /swap/swapfile)"
         echo 'add_dracutmodules+=" resume "' | put 644 /etc/dracut.conf.d/20-resume.conf

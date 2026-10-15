@@ -79,6 +79,7 @@ curl wget rsync jq unzip zip 7zip xz zstd man-pages man-db tealdeer trash-cli ac
 # Claude Code, Antigravity CLI (agy) and oh-my-pi (omp) use their official installers into ~/.local/bin.
 base-devel github-cli git-lfs cmake make automake bison flex python3 uv go rustup hugo shellcheck
 sqlite litecli pgcli lazygit typst tinymist
+sbcl                                          # Common Lisp (native-code compiler + REPL)
 
 # --- TeX (big, ~5 GB; carried over from the Fedora setup - comment out if not needed) ---
 texlive-full

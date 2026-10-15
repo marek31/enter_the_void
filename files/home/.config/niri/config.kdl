@@ -8,7 +8,6 @@ input {
         }
         repeat-delay 300
         repeat-rate 40
-        numlock
     }
     touchpad {
         tap

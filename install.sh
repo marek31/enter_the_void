@@ -55,7 +55,7 @@ free)
     read -r fbytes DISK START END <<< "$FREE"
     ESP=$(lsblk -lnpo NAME,PARTTYPE "$DISK" | awk -v t="$ESP_TYPE" 'tolower($2) == t {print $1; exit}')
     [[ -n $ESP ]] || die "no EFI system partition on $DISK to share - use wipe mode or create one"
-    echo "Void gets two new partitions in the $((fbytes >> 30)) GiB of free space on $DISK: /boot ($BOOT_MIB MiB) and the rest, encrypted."
+    echo "Void gets two new partitions in the $((fbytes >> 30)) GiB of free space on $DISK: /boot ($BOOT_MIB MiB) and the rest$([[ $ENCRYPT == yes ]] && echo ", encrypted")."
     echo "The EFI partition $ESP is shared (grub is added next to Windows Boot Manager, nothing is formatted)."
     read -rp "Type yes to continue: " confirm
     [[ $confirm == yes ]] || die "aborted, nothing changed"

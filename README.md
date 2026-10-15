@@ -6,34 +6,79 @@ No flatpak, no snap. All decisions are listed (and editable) in [config.sh](conf
 
 ## Install
 
-1. Write the Void live image (x86_64, **glibc**, base) to a USB stick: <https://voidlinux.org/download/>
-2. BIOS (F1): disable Secure Boot, keep UEFI on. Boot the stick (F12).
-   In a VM: UEFI firmware (VirtualBox: System > Enable EFI; Hyper-V: Generation 2, Secure Boot off) and 3D acceleration on.
-3. Log in as `root` / `voidlinux` and get online. USB ethernet just works. For wifi, find the interface with `ip link` (AX211 is usually `wlp0s20f3`), then
-   `wpa_passphrase SSID PASS > /etc/wpa.conf; wpa_supplicant -B -i wlp0s20f3 -c /etc/wpa.conf; dhcpcd wlp0s20f3`. Then:
+### 1. USB stick
+
+- **Image:** `void-live-x86_64-<date>-base.iso` from <https://repo-default.voidlinux.org/live/current/>, plus `sha256sum.txt` from the same folder.
+  Take **glibc** (no `musl` in the name) and **base** (not xfce): install.sh brings the desktop.
+- **Check it:** Windows: `(Get-FileHash .\void-live-x86_64-*-base.iso).Hash` must match its line in `sha256sum.txt`.
+  Linux: `sha256sum -c sha256sum.txt --ignore-missing`. Signature check: [Verifying images](https://docs.voidlinux.org/installation/index.html#verifying-images).
+- **Write it** (erases the stick, 2 GB or more):
+  Windows: [Rufus](https://rufus.ie/) > pick the ISO > Start > choose **DD Image mode** when asked.
+  Linux: `dd bs=4M if=void-live-x86_64-*-base.iso of=/dev/sdX status=progress; sync`.
+
+### 2. Before booting it: Windows (dual boot only)
+
+Skip this when the whole disk is wiped.
+
+1. **BitLocker:** write down the recovery key (`manage-bde -protectors -get C:` in an admin PowerShell) and suspend protection
+   (Control Panel > BitLocker > Suspend protection). Turning Secure Boot off otherwise makes Windows ask for that key.
+2. **Fast Startup off:** Control Panel > Power Options > Choose what the power buttons do > untick "Turn on fast startup".
+   Otherwise Windows leaves its partitions half-mounted.
+3. **Make room:** `diskmgmt.msc` > right-click C: > Shrink Volume. Leave the space **unallocated**, don't create a volume in it.
+   80-100 GiB recommended (the BORE kernel build needs ~25 GB, swap takes 16 GiB); 40 GiB is the minimum install.sh offers.
+4. **Clock** (both systems then keep the RTC in UTC), admin PowerShell:
+   ```powershell
+   reg add "HKLM\SYSTEM\CurrentControlSet\Control\TimeZoneInformation" /v RealTimeIsUniversal /t REG_DWORD /d 1 /f
+   ```
+
+### 3. BIOS and boot
+
+- Power on, **F1** = BIOS setup: Security > Secure Boot **off** (grub and the self-built BORE kernel are not signed). UEFI stays on (the Gen 10 has no legacy mode).
+- **F12** = boot menu: pick the USB stick.
+- VM: UEFI firmware (VirtualBox: System > Enable EFI; Hyper-V: Generation 2, Secure Boot off) and 3D acceleration on.
+
+### 4. Partitioning: what to pick
+
+Don't use `void-installer` from the ISO; install.sh partitions, encrypts and installs by itself. It asks for the mode:
+
+| Mode | When | Result |
+|---|---|---|
+| `free` (recommended on the X1) | Windows stays | Windows' EFI partition shared (≥16 MB free needed, nothing formatted) + new 1 GiB `/boot` (ext4) + new Void partition with the rest of the gap |
+| `wipe` | blank disk, VM, Linux only | GPT: 1 GiB EFI + 1 GiB `/boot` + the rest for Void |
+
+In both modes the Void partition is btrfs, **not encrypted** by default (boots without a passphrase):
+subvolumes `@` `/`, `@home`, `@snapshots`, `@var_log`, `@var_cache`, `@var_tmp`, `@swap` (16 GiB swapfile, used for hibernation).
+With `ENCRYPT=yes` the btrfs sits inside LUKS2 (argon2id, passphrase asked once at boot, ~2 s); `/boot` stays unencrypted either way.
+This layout is fixed after install; changing it (encryption included) means reinstalling.
+
+Settings worth a look in [config.sh](config.sh) before running it:
+
+| Setting | Default | Change when |
+|---|---|---|
+| `INSTALL_MODE` / `DISK` | ask | you want no questions |
+| `ENCRYPT` | `no` | `yes` if the laptop leaves the house: without it a stolen disk is readable by anyone |
+| `SWAP_GIB` | `16` (= RAM) | less RAM; below RAM size hibernation can fail |
+| `BOOT_MIB` | `1024` | keep: 3-4 kernels + initramfs fit |
+| `LUKS_ITER_MS` | `2000` | lower = faster unlock, weaker against passphrase guessing |
+
+### 5. Run the installer
+
+Log in as `root` / `voidlinux` and get online. USB ethernet just works. For wifi, find the interface with `ip link` (AX211 is usually `wlp0s20f3`), then
+`wpa_passphrase SSID PASS > /etc/wpa.conf; wpa_supplicant -B -i wlp0s20f3 -c /etc/wpa.conf; dhcpcd wlp0s20f3`. Then:
 
 ```sh
 xbps-install -Sy xbps git
 git clone https://github.com/marek31/enter_void
 cd enter_void
 vi config.sh          # optional: disk, swap size, scale, ...
-./install.sh          # wipes the disk you pick; asks for the disk passphrase and the user password
+./install.sh          # asks the mode (free/wipe) and the user password (+ disk passphrase with ENCRYPT=yes)
 ```
 
-4. Reboot. After the grub menu the passphrase is asked once (about 2 s to unlock), then the text login (tuigreet).
+Remove the stick and reboot: grub menu, then the text login (tuigreet). With `ENCRYPT=yes` the passphrase is asked once before it (about 2 s to unlock).
 
 If install.sh stops during setup (network, a download), do not reinstall: fix the cause, `git pull`, then `./resume.sh` in the same live session. It mounts the installed system (asking for the passphrase if needed) and re-runs setup.sh inside it; every step is safe to repeat. `./resume.sh apps finish` runs only those steps.
 
-### Dual boot on the X1 (Windows stays)
-
-Before installing, make sure in Windows: the disk has free (unallocated) space, Secure Boot is off, BitLocker is off or you have its
-recovery key, Fast Startup is off. install.sh offers mode `free` there: it creates one partition in that gap,
-shares the 260 MB EFI partition (adds `EFI\Void` next to `EFI\Microsoft`, formats nothing) and puts Windows in the grub menu.
-
-Before installing, in an **admin** PowerShell on Windows (keeps the clock right when switching OSes, both then use UTC):
-```powershell
-reg add "HKLM\SYSTEM\CurrentControlSet\Control\TimeZoneInformation" /v RealTimeIsUniversal /t REG_DWORD /d 1 /f
-```
+Dual boot: Windows appears in the grub menu. Resume BitLocker in Windows afterwards (Control Panel > BitLocker > Resume protection).
 If Windows ever boots straight to itself after an update, pick Void with F12 or move it first in BIOS > Startup > Boot.
 
 ## First login
@@ -48,7 +93,7 @@ If Windows ever boots straight to itself after an update, pick Void with F12 or 
 | Wallpapers | drop images into `~/Pictures/Wallpapers` |
 | Look | Super+, -> Theme: pick another palette, or "wallpaper" to derive colours from the wallpaper; every app follows |
 | BORE kernel | built automatically after the first boot when on AC (about an hour), or now: `sudo ~/enter_void/setup.sh kernel`; check with `uname -r` (ends in `-bore`) |
-| Dev tools | `claude`, `agy` (Antigravity CLI), `omp` (oh-my-pi), `deno`, `cargo`/`rustup`, `go` - log in to each on first run |
+| Dev tools | `claude`, `agy` (Antigravity CLI), `omp` (oh-my-pi), `deno`, `cargo`/`rustup`, `go`, `sbcl` (Common Lisp) - log in to each on first run |
 | Speakers | EasyEffects with Lenovo's Dolby tuning for this X1, made from the Windows driver on the first `refresh.sh` / `sudo ~/enter_void/setup.sh speakers` (needs the Windows partition) |
 | Phone | KDE Connect: install the KDE Connect app on the phone, same Wi-Fi, pair from the tray icon (firewall opens 1714-1764 to the LAN only) |
 | Remote desktop | `rustdesk` (start it when needed, no background service), Remmina for RDP/VNC |

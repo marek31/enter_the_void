@@ -41,9 +41,16 @@ padding = 12
 widget_spacing = 4
 shadow = false
 capsule = true
-start = ["launcher", "workspaces"]
+start = ["launcher", "taskbar"]
 center = ["clock"]
 end = ["tray", "network", "bluetooth", "volume", "battery", "control-center"]
+
+# workspaces as capsules holding the icons of their apps (replaces the plain 1 2 3 workspaces widget).
+# Click = focus, middle-click = close. App names need a horizontal bar (show_window_title, no grouping).
+[widget.taskbar]
+group_by_workspace = true
+hide_empty_workspaces = true
+group_single_icon_per_app = true
 
 [wallpaper]
 enabled = true
@@ -83,6 +90,10 @@ enabled = true
 timeout = 3660
 action = "screen_off"
 enabled = true
+
+# no weather anywhere (control-center tab, bar/desktop widgets) and no periodic weather/location requests
+[weather]
+enabled = false
 
 [nightlight]
 enabled = true

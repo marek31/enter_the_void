@@ -19,7 +19,7 @@
 #               Bibata cursor, Hokusai "Great Wave" wallpaper (public domain)
 #   dev         Go (xbps), Rust (rustup), Deno, Claude Code, Antigravity CLI (agy), oh-my-pi (omp)
 #   remote      RustDesk (upstream package), Remmina; KDE Connect for the phone (LAN-only firewall rule)
-#   upkeep      browsers/Noctalia auto-update every 6 h, update notifications, monthly btrfs scrub,
+#   upkeep      browsers/Noctalia auto-update once a day, update notifications, monthly btrfs scrub,
 #               smartd, earlyoom, hibernate at 5 % battery, USB automount (udiskie)
 #   browsers    Helium (default) + Floorp: upstream tarballs in /opt, updated by `setup.sh apps`;
 #               Firefox + Opera (nonfree) from xbps

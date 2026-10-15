@@ -330,14 +330,16 @@ step_desktop() {
         rm -rf /usr/local/lib/enter_void
         mv /usr/local/lib/enter_void.new /usr/local/lib/enter_void
     fi
+    mkdir -p /var/lib/enter_void
     put 755 /usr/local/bin/battery-guard < "$FILES/battery-guard"
     put 755 /usr/local/bin/update-notify < "$FILES/update-notify"
     put 644 /etc/cron.d/enter_void <<'EOF'
 PATH=/usr/local/bin:/usr/bin:/usr/sbin:/bin
 # package index refresh, so update-notify (desktop) can count pending updates
 17 */6 * * * root xbps-install -S >/dev/null 2>&1
-# Helium, Floorp, Resilio, fonts, cursor, Noctalia: installed when a new release is out (skipped while running)
-47 */6 * * * root /usr/local/lib/enter_void/setup.sh apps >/dev/null 2>&1
+# Helium, Floorp, Resilio, RustDesk, fonts, cursor, Noctalia: once a day (skipped while running). Checked
+# hourly against a stamp, so a laptop that was off or asleep at that time still updates when it is back.
+47 * * * * root find /var/lib/enter_void/apps.stamp -mmin -1440 2>/dev/null | grep -q . || { /usr/local/lib/enter_void/setup.sh apps >/dev/null 2>&1 && touch /var/lib/enter_void/apps.stamp; }
 # monthly checksum scrub of the whole btrfs filesystem
 0 11 1 * * root btrfs scrub start -Bd / >/dev/null 2>&1 || logger -t enter_void "btrfs scrub reported errors"
 # BORE kernel: rebuilt only when Void ships a new kernel, and only on AC power

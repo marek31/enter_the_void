@@ -77,8 +77,8 @@ One grammar (Super = Mod), H/J/K/L and arrows interchangeable. `Super+Shift+/` s
 | Super+E / A / P | files / audio mixer / KeePassXC | Super+O | overview (drag windows between workspaces) |
 | Ctrl+Shift+Esc | task manager (btop) | Super+Tab / Super+` | previous workspace / previous window |
 | Alt+Tab | window switcher | Super+U / I, Page Down / Up | workspace below / above |
-| Print / Ctrl / Alt, Super+Shift+S | screenshot region / screen / window | Super+Shift+Page Down / Up | reorder workspaces |
-| Super+Ctrl+S | screenshot + annotate | Super+Home / End (+Ctrl) | first / last column (move there) |
+| PrtSc / Ctrl / Alt / Shift +PrtSc | screenshot region / screen / window / annotate | Super+Shift+Page Down / Up | reorder workspaces |
+| | | Super+Home / End (+Ctrl) | first / last column (move there) |
 | Super+Esc | lock | Super+Shift+Esc | power menu |
 | Super+Ctrl+Esc | pass all keys to the app (VM, remote desktop) | Super+Shift+E / P | quit niri / screens off |
 

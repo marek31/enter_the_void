@@ -152,7 +152,7 @@ window-rule {
 //   Mod + Shift + dir     send the column: J/K or Down/Up = workspace below/above, H/L or Left/Right = other monitor
 //   Mod + Alt + dir       resize: H/L = narrower/wider, J/K = shorter/taller
 //   Mod + N / Shift+N / Ctrl+N    go to workspace N / send column there / send only the window there
-// Windows habits kept where they don't clash: Super+V clipboard, Super+. emoji, Super+Shift+S screenshot,
+// Windows habits kept where they don't clash: Super+V clipboard, Super+. emoji,
 // Ctrl+Shift+Esc task manager, Alt+Tab switcher. No Ctrl+Alt+<key> binds: IDEs use those.
 // Mod+Shift+/ shows the full list on screen.
 binds {
@@ -190,12 +190,11 @@ binds {
     Mod+Shift+P      { power-off-monitors; }
     Mod+Shift+E      { quit; }
 
-    // --- screenshots (niri's own picker; Noctalia's annotate mode on Mod+Ctrl+S) ---
-    Print            { screenshot; }
-    Ctrl+Print       { screenshot-screen; }
-    Alt+Print        { screenshot-window; }
-    Mod+Shift+S      hotkey-overlay-title="Screenshot region" { screenshot; }
-    Mod+Ctrl+S       hotkey-overlay-title="Screenshot + annotate" { spawn-sh "noctalia msg screenshot-annotate"; }
+    // --- screenshots: all on PrtSc ---
+    Print            hotkey-overlay-title="Screenshot region" { screenshot; }
+    Ctrl+Print       hotkey-overlay-title="Screenshot screen" { screenshot-screen; }
+    Alt+Print        hotkey-overlay-title="Screenshot window" { screenshot-window; }
+    Shift+Print      hotkey-overlay-title="Screenshot + annotate" { spawn-sh "noctalia msg screenshot-annotate"; }
 
     // --- focus: Mod + dir ---
     Mod+H     { focus-column-or-monitor-left; }

@@ -56,6 +56,7 @@ sv_enable() {
 }
 sv_disable() { local s; for s; do rm -f "/etc/runit/runsvdir/default/$s"; done; }
 # run as the desktop user with that user's HOME (runuser alone may keep root's HOME inside the chroot)
+in_vmware() { grep -qi vmware /sys/class/dmi/id/sys_vendor 2>/dev/null; }
 in_chroot() { [[ $(stat -c %d:%i /) != "$(stat -c %d:%i /proc/1/root/. 2>/dev/null)" ]]; }
 as_user() {
     local vars=(HOME="$UHOME" USER="$USERNAME" LOGNAME="$USERNAME"
@@ -107,6 +108,7 @@ step_packages() {
     mapfile -t pkgs < <(sed 's/#.*//' "$HERE/packages.txt" | tr -s ' \t' '\n' | sed '/^$/d')
     grep -q GenuineIntel /proc/cpuinfo && pkgs+=(intel-ucode)
     grep -q AuthenticAMD /proc/cpuinfo && pkgs+=(linux-firmware-amd)
+    in_vmware && pkgs+=(open-vm-tools)   # VM tests: clipboard, time sync, display resize
     xbps-install -Sy "${pkgs[@]}"
 }
 
@@ -318,6 +320,7 @@ step_desktop() {
     log "services, audio, power, fonts, theme, dotfiles"
     sv_enable dbus elogind polkitd NetworkManager bluetoothd chronyd cronie socklog-unix nanoklogd \
         cupsd cups-browsed avahi-daemon ipp-usb tlp tlp-pd thermald snapperd greetd earlyoom smartd
+    if in_vmware; then sv_enable vmtoolsd vmware-vmblock-fuse; fi
 
     # cron must never run a script the desktop user can edit: keep a root-owned copy
     if [[ $HERE != /usr/local/lib/enter_void ]]; then

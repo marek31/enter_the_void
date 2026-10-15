@@ -109,7 +109,7 @@ Open items from the 2026-10-14/15 sessions. Tick them off here when done.
 
 **VM only**
 - [ ] `KERNEL_BORE=no` in /usr/local/lib/enter_void/config.sh (an hours-long build tells nothing new).
-- [ ] Bridged network adapter for printer / KDE Connect tests; more RAM/CPU for builds; `open-vm-tools` for display resizing (name unverified).
+- [ ] Bridged network adapter for printer / KDE Connect tests; more RAM/CPU for builds. (open-vm-tools is installed automatically under VMware since 2026-10-15; never run VMware's own Tools installer from the virtual CD.)
 
 ## Current functionality
 install.sh: wipe or free-space mode, ESP + plain /boot + LUKS2, btrfs subvolumes, bootstrap, fstab, grub, then setup.sh in a chroot.
@@ -140,3 +140,4 @@ setup.sh steps: base (host, tz, locale, console), packages, user (groups, sudo, 
 - 2026-10-15: X1 speakers: EasyEffects + Lenovo Dolby tuning converted on the device (step `speakers`); litecli, pgcli.
 - 2026-10-15: PDF and Markdown readers: sioyek, xournalpp, pdfarranger, poppler-utils, qpdf, ghostwriter (default for .md), glow.
 - 2026-10-15: psmisc (fuser, killall, pstree).
+- 2026-10-15: under VMware, open-vm-tools is installed and vmtoolsd + vmware-vmblock-fuse enabled automatically.

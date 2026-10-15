@@ -16,7 +16,8 @@
 #   look        minimal: Kanagawa palette pushed by Noctalia to niri/foot/GTK/Qt/KDE/btop/starship,
 #               thin floating bar, single-accent focus ring, no borders, Inter + JetBrains Mono,
 #               Bibata cursor, Hokusai "Great Wave" wallpaper (public domain)
-#   dev         Go (xbps), Rust (rustup), Claude Code, Antigravity CLI (agy), oh-my-pi (omp)
+#   dev         Go (xbps), Rust (rustup), Deno, Claude Code, Antigravity CLI (agy), oh-my-pi (omp)
+#   remote      RustDesk (upstream package), Remmina; KDE Connect for the phone (LAN-only firewall rule)
 #   upkeep      browsers/Noctalia auto-update every 6 h, update notifications, monthly btrfs scrub,
 #               smartd, earlyoom, hibernate at 5 % battery, USB automount (udiskie)
 #   browsers    Helium (default) + Floorp: upstream tarballs in /opt, updated by `setup.sh apps`;

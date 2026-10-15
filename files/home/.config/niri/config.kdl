@@ -91,6 +91,7 @@ spawn-at-startup "gnome-keyring-daemon" "--start" "--components=secrets"
 spawn-at-startup "noctalia"
 spawn-at-startup "udiskie" "--automount" "--notify"   // USB drives mount on plug-in
 spawn-at-startup "update-notify"
+spawn-at-startup "kdeconnect-indicator"   // KDE Connect daemon + tray icon (phone link)
 
 animations {
     slowdown 0.9

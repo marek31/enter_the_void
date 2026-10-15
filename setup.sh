@@ -56,6 +56,7 @@ sv_enable() {
 }
 sv_disable() { local s; for s; do rm -f "/etc/runit/runsvdir/default/$s"; done; }
 # run as the desktop user with that user's HOME (runuser alone may keep root's HOME inside the chroot)
+in_chroot() { [[ $(stat -c %d:%i /) != "$(stat -c %d:%i /proc/1/root/. 2>/dev/null)" ]]; }
 as_user() {
     (cd "$UHOME" && runuser -u "$USERNAME" -- env HOME="$UHOME" USER="$USERNAME" LOGNAME="$USERNAME" \
         PATH="$UHOME/.local/bin:$UHOME/.cargo/bin:/usr/local/bin:/usr/bin:/usr/sbin:/bin" "$@")
@@ -132,6 +133,7 @@ step_security() {
     log "firewall, sysctl, AppArmor, root lock"
     tpl "$FILES/nftables.conf" | put 644 /etc/nftables.conf
     nft -c -f /etc/nftables.conf || die "nftables.conf does not parse"
+    if ! in_chroot && [[ -L /var/service/nftables ]]; then nft -f /etc/nftables.conf; fi   # apply now
     put 644 /etc/sysctl.d/90-hardening.conf < "$FILES/sysctl-hardening.conf"
     printf '* hard core 0\n' | put 644 /etc/security/limits.d/90-nocore.conf
     # AppArmor on Void = the kernel parameters below; enforce is the default mode (no config file)
@@ -297,7 +299,7 @@ PRUNEPATHS="/tmp /var/tmp /var/cache /.snapshots /home/.snapshots /btrfsroot /sw
 EOF
     # user tool dirs on PATH for everything started from the session, not only shells
     put 644 /etc/profile.d/enter_void.sh <<'EOF'
-export PATH="$HOME/.local/bin:$HOME/.cargo/bin:$HOME/go/bin:$PATH"
+export PATH="$HOME/.local/bin:$HOME/.cargo/bin:$HOME/go/bin:$HOME/.deno/bin:$PATH"
 EOF
 
     mkdir -p /etc/pipewire/pipewire.conf.d /etc/alsa/conf.d
@@ -363,7 +365,7 @@ gh_asset() { # gh_asset <owner/repo> <asset-name regex> -> download URL of the l
         jq -r --arg re "$2" '[.assets[] | select(.name | test($re))][0].browser_download_url // empty' ||
         die "GitHub API request failed for $1 (rate limit is 60/hour)"
 }
-opt_install() { # opt_install <dest dir> <url> <tar --strip-components> <version key>
+opt_install() { # opt_install <dest dir> <url> <tar --strip-components> <version key> [folder inside the archive]
     local dest=$1 tmp
     [[ -n $2 ]] || die "no download URL for $dest"
     if [[ $(cat "$dest/.version" 2>/dev/null) == "$4" ]]; then log "$dest is current"; return 0; fi
@@ -374,7 +376,7 @@ opt_install() { # opt_install <dest dir> <url> <tar --strip-components> <version
     tmp=$(mktemp -d "$(dirname "$dest")/.install.XXXXXX")
     curl -fL --retry 3 --max-time 900 -o "$tmp/pkg" "$2"
     mkdir "$tmp/root"
-    tar -xf "$tmp/pkg" -C "$tmp/root" --strip-components="$3" --no-same-owner
+    tar -xf "$tmp/pkg" -C "$tmp/root" --strip-components="$3" --no-same-owner ${5:+"$5"}
     echo "$4" > "$tmp/root/.version"
     rm -rf "$dest.old"
     [[ -d $dest ]] && mv "$dest" "$dest.old"
@@ -437,6 +439,13 @@ EOF
 
     put 755 /usr/local/bin/pcloud-install < "$FILES/pcloud-install"
 
+    # RustDesk: no tarball upstream; its Arch package is a plain .tar.zst. Unpack usr/share/rustdesk to the
+    # same path (the app may expect it there). No systemd service: start it when you need it.
+    url=$(gh_asset rustdesk/rustdesk 'x86_64\.pkg\.tar\.zst$')
+    opt_install /usr/share/rustdesk "$url" 3 "$url" usr/share/rustdesk
+    ln -sf /usr/share/rustdesk/rustdesk /usr/local/bin/rustdesk
+    desktop_entry rustdesk RustDesk "rustdesk" rustdesk "Network;RemoteAccess;"
+
     font_zip JetBrainsMono JetBrains/JetBrainsMono
     font_zip CascadiaCode microsoft/cascadia-code
     fc-cache -f >/dev/null
@@ -463,13 +472,14 @@ EOF
         (cd "$src" && just configure release &&
             meson configure build-release -Db_lto_threads="$jobs" &&
             meson compile -C build-release -j "$jobs" noctalia &&
+            rm -f /usr/local/bin/noctalia &&   # a running shell keeps its copy; no "text file busy"
             just install release)
         echo "$tag" > /usr/local/share/noctalia/.version
     fi
 }
 
 step_devtools() {
-    log "Rust (rustup), Claude Code, Antigravity CLI, oh-my-pi"
+    log "Rust (rustup), Claude Code, Antigravity CLI, Deno, oh-my-pi"
     # Each one updates itself afterwards (rustup update / claude auto-update / agy / omp installer re-run).
     # A failure only warns: these come from external installers and must not break the system setup.
     as_user mkdir -p "$UHOME/.local/bin"
@@ -480,6 +490,8 @@ step_devtools() {
     [[ -x $UHOME/.local/bin/agy ]] ||
         as_user bash -o pipefail -c 'curl -fsSL https://antigravity.google/cli/install.sh | bash' ||
         warn "Antigravity CLI install failed (needs AES-NI; in a VM pass the host CPU through)"
+    [[ -x $UHOME/.deno/bin/deno ]] ||
+        as_user bash -o pipefail -c 'curl -fsSL https://deno.land/install.sh | sh -s -- -y' || warn "Deno install failed"
     [[ -x $UHOME/.local/bin/omp ]] ||
         as_user bash -o pipefail -c 'curl -fsSL https://omp.sh/install | sh -s -- --binary' || warn "oh-my-pi install failed"
 }
@@ -504,7 +516,7 @@ on_ac() { # true on mains power, or when there is no battery at all (desktop, VM
 # xbps-src as linux<series>-bore. The stock kernel stays installed and in the grub menu as the fallback.
 step_kernel() {
     [[ $KERNEL_BORE == yes ]] || { log "BORE kernel disabled in config.sh"; return 0; }
-    if [[ $(stat -c %d:%i /) != "$(stat -c %d:%i /proc/1/root/. 2>/dev/null)" ]]; then
+    if in_chroot; then
         log "BORE kernel: built after the first boot by cron (on AC power, about an hour), or run: sudo setup.sh kernel"
         return 0
     fi

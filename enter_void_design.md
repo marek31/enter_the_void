@@ -25,6 +25,8 @@
 - **Login:** greetd + tuigreet on vt7; `/usr/local/bin/niri-void-session` runs `dbus-run-session niri --session` because `niri-session` needs systemd. pipewire is started by niri.
 - **Noctalia v5** is a native C++ app, no longer Quickshell-based, and not packaged in Void. It is built from the latest release tag with the deps listed in its BUILDING.md (all in Void), and installed to `/usr/local`. Password checks use the PAM `login` service; the fingerprint goes through fprintd D-Bus (`[lockscreen] fingerprint = true`).
 - **Browsers/Resilio:** upstream tarballs into `/opt/<name>` (atomic swap, `.version` stamp). `setup.sh apps` updates them. HTTPS from the vendor/GitHub is the trust root; signatures are not checked (Helium ships `.asc`, but no pinned key here).
+- **RustDesk:** not in Void; upstream ships no tarball, but its Arch package is a plain `.tar.zst`. `usr/share/rustdesk` is unpacked to the same path (opt_install folder argument), runtime libs from xbps (`libayatana-appindicator` replaces Arch's libappindicator). Its systemd service file is ignored: started by hand.
+- **KDE Connect:** started by niri (`kdeconnect-indicator`, since niri runs no XDG autostart); firewall opens 1714-1764 tcp/udp to private IPv4 ranges only.
 - **pCloud:** the only Linux build is an AppImage behind a per-session link, so it cannot be scripted. `pcloud-install` unpacks it into `/opt/pcloud` (no FUSE2 runtime needed to start it; `fuse`/`fuse3` are installed for its virtual drive).
 - **Power:** TLP + tlp-pd (TLP's power-profiles D-Bus API, so Noctalia's profile switch works). It conflicts with power-profiles-daemon. thermald stays.
 - **Firewall:** nftables, inbound default drop; allowed: established, loopback, rate-limited ICMP, DHCPv6, mDNS from LAN (printer/scanner discovery), Resilio port 55555 and LAN discovery 3838. No sshd. Resilio WebUI only on 127.0.0.1, UPnP off.
@@ -93,3 +95,4 @@ setup.sh steps: base (host, tz, locale, console), packages, user (groups, sudo, 
 - 2026-10-15: screenshots only on PrtSc (Shift+PrtSc = annotate); dropped Super+Shift+S and Super+Ctrl+S.
 - 2026-10-15: Firefox + Opera (Void nonfree) added; PrtSc = whole screen, Shift+PrtSc = region, Ctrl+PrtSc = annotate; refresh.sh also installs new packages.
 - 2026-10-15: sqlite, lazygit, typst, tinymist added.
+- 2026-10-15: Deno (dev tools), RustDesk, KDE Connect (+ LAN-only firewall rule, applied live), snapshot; refresh.sh now also runs security, apps and devtools.

@@ -42,6 +42,8 @@ libreoffice libreoffice-i18n-pl hunspell-pl hunspell-en hyphen-pl mythes-pl
 
 # --- browsers: Firefox + Opera (nonfree repo) from xbps; Helium + Floorp as upstream tarballs into /opt ---
 firefox opera
+# RustDesk runtime (RustDesk itself: upstream package unpacked by setup.sh apps)
+xdotool libxcb libXfixes libva libayatana-appindicator gst-plugins-base1 gstreamer1-pipewire
 nss gtk+3 dbus-glib alsa-lib libcups fuse fuse3
 
 # --- fonts (all open licences, same files work on Windows) ---
@@ -56,7 +58,7 @@ foot Thunar thunar-volman thunar-archive-plugin gvfs gvfs-smb gvfs-mtp tumbler f
 udisks2 ntfs-3g exfatprogs dosfstools cifs-utils nfs-utils
 okular zathura zathura-pdf-mupdf geeqie qimgv imv mpv vlc gimp ffmpeg yt-dlp
 gst-plugins-good1 gst-plugins-bad1 gst-plugins-ugly1 gst-libav
-Signal-Desktop remmina qbittorrent calibre kate qalculate-qt fsearch qdirstat gparted
+Signal-Desktop remmina kdeconnect snapshot qbittorrent calibre kate qalculate-qt fsearch qdirstat gparted
 meld kdiff3 krename ncmpcpp keepassxc restic rclone
 
 # --- shell and CLI tools ---

@@ -180,7 +180,6 @@ binds {
     Mod+N            hotkey-overlay-title="Do not disturb" { spawn-sh "noctalia msg notification-dnd-toggle"; }
     Mod+Shift+N      hotkey-overlay-title="Dismiss notifications" { spawn-sh "noctalia msg notification-clear-active"; }
     Mod+Ctrl+N       hotkey-overlay-title="Night light" { spawn-sh "noctalia msg nightlight-toggle"; }
-    Mod+Ctrl+I       hotkey-overlay-title="Keep awake (caffeine)" { spawn-sh "noctalia msg caffeine-toggle"; }
     Mod+Ctrl+W       hotkey-overlay-title="Next wallpaper" { spawn-sh "noctalia msg wallpaper-next"; }
     Mod+Ctrl+T       hotkey-overlay-title="Dark / light theme" { spawn-sh "noctalia msg theme-mode-toggle"; }
     Alt+Tab          { spawn-sh "noctalia msg window-switcher hold"; }

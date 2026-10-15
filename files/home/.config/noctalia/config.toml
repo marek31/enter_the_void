@@ -91,6 +91,18 @@ timeout = 3660
 action = "screen_off"
 enabled = true
 
+# control center tiles: Noctalia's default set minus caffeine (keep-awake); "weather" etc. can be added
+[[control_center.shortcuts]]
+type = "wifi"
+[[control_center.shortcuts]]
+type = "bluetooth"
+[[control_center.shortcuts]]
+type = "nightlight"
+[[control_center.shortcuts]]
+type = "notification"
+[[control_center.shortcuts]]
+type = "power_profile"
+
 # no weather anywhere (control-center tab, bar/desktop widgets) and no periodic weather/location requests
 [weather]
 enabled = false

@@ -119,7 +119,7 @@ One grammar (Super = Mod), H/J/K/L and arrows interchangeable. `Super+Shift+/` s
 | Super+S | control center | Super+R / Shift+R / Ctrl+R | width presets / height presets / reset height |
 | Super+, | settings | Super+- / = (Shift: height) | narrower / wider by 10 % |
 | Super+N / Shift+N | do not disturb / dismiss notifications | Super+C / Ctrl+C | centre column / centre all visible |
-| Super+Ctrl+N / I / W / T | night light / keep awake / next wallpaper / dark-light | Super+[ / ] | pull window into / push out of the column |
+| Super+Ctrl+N / W / T | night light / next wallpaper / dark-light | Super+[ / ] | pull window into / push out of the column |
 | Super+Return / Shift+Return | terminal / floating terminal | Super+W | tabs in the column |
 | Super+B / Shift+B | Helium / Floorp | Super+T / Shift+T | float-tile / jump between float and tile |
 | Super+E / A / P | files / audio mixer / KeePassXC | Super+O | overview (drag windows between workspaces) |

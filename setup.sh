@@ -338,10 +338,10 @@ step_desktop() {
 PATH=/usr/local/bin:/usr/bin:/usr/sbin:/bin
 # package index refresh, so update-notify (desktop) can count pending updates
 17 */6 * * * root xbps-install -S >/dev/null 2>&1
-# Helium, Floorp, Resilio, RustDesk, fonts, cursor, Noctalia: once a day, only on AC or above 50 % battery
+# Helium, Floorp, Resilio, RustDesk, fonts, cursor, Noctalia: once a day, only on AC with battery above 80 %
 # (skipped while an app runs). Checked hourly against a stamp, so a laptop that was off, asleep or low
 # on battery catches up as soon as it can.
-47 * * * * root power-ok 50 && ! find /var/lib/enter_void/apps.stamp -mmin -1440 2>/dev/null | grep -q . && /usr/local/lib/enter_void/setup.sh apps >/dev/null 2>&1 && touch /var/lib/enter_void/apps.stamp
+47 * * * * root power-ok 80 && ! find /var/lib/enter_void/apps.stamp -mmin -1440 2>/dev/null | grep -q . && /usr/local/lib/enter_void/setup.sh apps >/dev/null 2>&1 && touch /var/lib/enter_void/apps.stamp
 # monthly checksum scrub of the whole btrfs filesystem
 0 11 1 * * root btrfs scrub start -Bd / >/dev/null 2>&1 || logger -t enter_void "btrfs scrub reported errors"
 # BORE kernel: rebuilt only when Void ships a new kernel, and only on AC power

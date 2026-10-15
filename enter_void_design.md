@@ -88,7 +88,7 @@ Open items from the 2026-10-14/15 sessions. Tick them off here when done.
 - [ ] `fprintd-enroll`, then check fingerprint on sudo and the lock screen.
 - [ ] `fwupdmgr refresh && fwupdmgr update` (BIOS, fingerprint reader firmware).
 - [ ] BORE kernel: let cron build it on AC (~45-90 min, estimate), then `uname -r` ends in `-bore` and `sysctl kernel.sched_bore` = 1.
-- [ ] Printer Brother DCP-L2530DW (192.168.0.241 / BRW106FD982F34B.local): `lpstat -v` shows a queue, simple-scan finds the scanner. Fallback command in the chat log / README.
+- [ ] Printer Brother DCP-L2530DW (192.168.0.241 / BRW106FD982F34B.local): `lpstat -v` shows a queue, simple-scan finds the scanner. No queue? `sudo lpadmin -p Brother_DCP_L2530DW -E -v ipp://BRW106FD982F34B.local/ipp/print -m everywhere`
 - [ ] `cloud setup`, list folders in `~/.config/cloud-sync.conf`, `cloud sync -n` then `cloud sync`.
 - [ ] KDE Connect: pair the phone. If no tray icon, check the binary name (`ls /usr/bin | grep kdeconnect`) and fix `spawn-at-startup` in niri config.
 - [ ] RustDesk: check outgoing sessions; incoming control on Wayland may be limited.

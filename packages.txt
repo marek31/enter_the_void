@@ -60,7 +60,11 @@ fonts-roboto-ttf ttf-opensans font-atkinson-hyperlegible-ttf nerd-fonts-symbols-
 # --- files, media, desktop apps (replaces the old flatpak list) ---
 foot Thunar thunar-volman thunar-archive-plugin gvfs gvfs-smb gvfs-mtp tumbler ffmpegthumbnailer file-roller
 udisks2 ntfs-3g exfatprogs dosfstools cifs-utils nfs-utils
-okular zathura zathura-pdf-mupdf geeqie qimgv imv mpv vlc gimp ffmpeg yt-dlp
+# PDF: okular (forms, signing, default), zathura (minimal, vim keys), sioyek (technical docs: jump to references),
+# xournalpp (annotate / handwrite / sign), pdfarranger (merge, split, rotate pages), poppler-utils + qpdf (CLI)
+# Markdown: ghostwriter (editor + live preview, default for .md), glow (terminal); okular also renders .md
+okular zathura zathura-pdf-mupdf sioyek xournalpp pdfarranger poppler-utils qpdf ghostwriter glow
+geeqie qimgv imv mpv vlc gimp ffmpeg yt-dlp
 gst-plugins-good1 gst-plugins-bad1 gst-plugins-ugly1 gst-libav
 Signal-Desktop remmina kdeconnect snapshot gpu-screen-recorder qbittorrent calibre kate qalculate-qt fsearch qdirstat gparted
 meld kdiff3 krename ncmpcpp keepassxc restic rclone

@@ -138,3 +138,4 @@ setup.sh steps: base (host, tz, locale, console), packages, user (groups, sudo, 
 - 2026-10-15: TLP profiles: balanced on AC, power-saver on battery, performance on demand.
 - 2026-10-15: LUKS2 (argon2id) + unencrypted 1 GiB /boot instead of LUKS1 + keyfile (no grub unlock wait); Noctalia Greeter login; screen recording (Super+PrtSc).
 - 2026-10-15: X1 speakers: EasyEffects + Lenovo Dolby tuning converted on the device (step `speakers`); litecli, pgcli.
+- 2026-10-15: PDF and Markdown readers: sioyek, xournalpp, pdfarranger, poppler-utils, qpdf, ghostwriter (default for .md), glow.

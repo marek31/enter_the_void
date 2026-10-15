@@ -437,6 +437,9 @@ EOF
     put 755 /usr/local/bin/resilio < "$FILES/resilio"
     desktop_entry resilio "Resilio Sync" "resilio start" folder-sync "Network;FileTransfer;"
 
+    # pCloud: `cloud` (rclone) is the default; pcloud-install keeps the official app as an option
+    put 755 /usr/local/bin/cloud < "$FILES/cloud"
+    desktop_entry pcloud-folder "pCloud" "cloud open" folder-cloud "Network;FileTransfer;"
     put 755 /usr/local/bin/pcloud-install < "$FILES/pcloud-install"
 
     # RustDesk: no tarball upstream; its Arch package is a plain .tar.zst. Unpack usr/share/rustdesk to the

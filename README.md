@@ -43,7 +43,7 @@ If Windows ever boots straight to itself after an update, pick Void with F12 or 
 | Fingerprint | `fprintd-enroll` (then works for sudo and the lock screen) |
 | Firmware (BIOS, fingerprint, ...) | `fwupdmgr refresh && fwupdmgr update` |
 | Resilio Sync | `resilio` (start + WebUI), `resilio stop` |
-| pCloud | download the Linux AppImage from <https://www.pcloud.com/download-free-online-cloud-file-storage.html>, then `pcloud-install`, then `pcloud` |
+| pCloud | `cloud setup` once (browser login). Then `cloud open` (pCloud as a folder, also "pCloud" in the launcher), `cloud sync` (two-way sync of the folders listed in `~/.config/cloud-sync.conf`), `cloud send FILE` or right-click > "Send to pCloud" in Thunar (uploads, copies a share link). The official app is still available: `pcloud-install`. |
 | Printer / scanner on wifi | usually found automatically; otherwise `system-config-printer`, scan with `simple-scan` |
 | Wallpapers | drop images into `~/Pictures/Wallpapers` |
 | Look | Super+, -> Theme: pick another palette, or "wallpaper" to derive colours from the wallpaper; every app follows |

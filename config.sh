@@ -24,7 +24,8 @@
 #               Firefox + Opera (nonfree) from xbps
 #   office      LibreOffice (Polish UI pack + spelling)
 #   printing    CUPS + cups-browsed + avahi (wifi/IPP Everywhere), sane-airscan for network scanners
-#   sync        Resilio Sync and pCloud installed, never autostarted (run `resilio` / `pcloud`)
+#   sync        Resilio Sync (run `resilio`) and pCloud via rclone (`cloud`), nothing autostarted;
+#               the official pCloud app stays available through pcloud-install
 #   kernel      BORE scheduler (as in CachyOS): Void's kernel template + CachyOS's BORE patch, built
 #               locally with xbps-src as linux<series>-bore, default in grub; stock kernel kept as fallback
 #   init        runit, no systemd anywhere (elogind for seats/suspend only)

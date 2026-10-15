@@ -75,6 +75,7 @@
 - AppArmor on Void has no /etc/default/apparmor: `apparmor=1 security=apparmor` on the kernel line is all, enforce is the default.
 - snapper `TIMELINE_CREATE=yes` makes snapper call `systemctl enable snapper-timeline.timer`; keep it `no`, snapper-tick creates the snapshots.
 - Building Noctalia with `just build` runs one C++ job per thread at ~0.5-0.7 GB each and got OOM-killed in a VM. setup.sh compiles with `meson compile -j N` (N = MemAvailable / 1.5 GB, also used for LTO and the kernel build), and the swapfile is switched on during the install and in resume.sh.
+- At shutdown elogind revokes the seat before runit stops niri, so niri logs DRM "page flip ... permission denied" warnings until it is killed. Harmless; niri-void-session sends niri's log to ~/.local/state/niri/<date>-niri.log (14 days kept) so it no longer shows on the console.
 - `sv` commands do nothing inside the chroot; services are enabled by symlinks in `/etc/runit/runsvdir/default`.
 
 ## To do later
@@ -141,3 +142,4 @@ setup.sh steps: base (host, tz, locale, console), packages, user (groups, sudo, 
 - 2026-10-15: PDF and Markdown readers: sioyek, xournalpp, pdfarranger, poppler-utils, qpdf, ghostwriter (default for .md), glow.
 - 2026-10-15: psmisc (fuser, killall, pstree).
 - 2026-10-15: under VMware, open-vm-tools is installed and vmtoolsd + vmware-vmblock-fuse enabled automatically.
+- 2026-10-15: niri log to a daily file instead of the console (shutdown DRM warnings).

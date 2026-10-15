@@ -3,6 +3,8 @@
 # system), take its dotfiles (your old ones go to ~/.backup),
 # restart Noctalia so the new look shows up. niri reloads its own config by itself.
 set -e
+# as root, the restart below would start Noctalia for root, outside your session: no bar, no launcher
+[ "$(id -u)" -ne 0 ] || { echo "run refresh.sh as yourself, not root (it calls sudo itself)"; exit 1; }
 cd "$(dirname "$0")"
 git pull --ff-only
 sudo ./setup.sh packages security apps login devtools speakers dotfiles

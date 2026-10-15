@@ -65,6 +65,7 @@
 - VMs: firmware must be UEFI (VirtualBox: System > Enable EFI; Hyper-V: Generation 2 with Secure Boot off; virt-manager: choose UEFI before creating the VM, it can't be changed later) and 3D acceleration on, or niri has no GPU to render with.
 - install.sh refuses any disk with a mounted partition, so it can't wipe the system it runs on; it must run from the live ISO.
 - `exec > >(tee ...)` is asynchronous: without the EXIT trap that closes stdout and waits for tee, messages show up after the shell prompt.
+- refresh.sh run from a root shell kills your Noctalia and starts one for root, which can't attach to your session: no bar, no launcher. It now refuses to run as root.
 - Antigravity CLI needs AES-NI: in a VM pass the host CPU through, or `agy` dies with an illegal instruction.
 - Noctalia template ids that are not listed in `builtin_ids` are not applied: an empty list means none, not all.
 - Dual boot clock: Windows keeps the RTC in local time; set `RealTimeIsUniversal=1` in Windows so both use UTC (Void keeps `HARDWARECLOCK=UTC`).
@@ -154,3 +155,4 @@ setup.sh steps: base (host, tz, locale, console), packages, user (groups, sudo, 
 - 2026-10-15: animations super fast: niri slowdown 0.25, Noctalia [shell.animation] speed 3.0, lock 100 ms, wallpaper 300 ms.
 - 2026-10-15: animations off by default (niri `animations { off }`, Noctalia `[shell.animation] enabled = false`); lock/wallpaper fades kept at their minimum.
 - 2026-10-15: bar thinner (30 px) and flush with the left edge, full height, square (`margin_edge = 0`, `margin_ends = 0`, `radius = 0`); Super+F = `maximize-window-to-edges` (no gaps/ring, only the bar stays), Super+M = old full-width column; refresh.sh warns when Settings overrides the bar.
+- 2026-10-15: refresh.sh refuses to run as root (it restarted Noctalia as root: no bar, no launcher).

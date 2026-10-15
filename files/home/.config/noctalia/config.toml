@@ -23,6 +23,11 @@ clipboard_enabled = true
 clipboard_history_max_entries = 200
 corner_radius_scale = 1.0
 
+# panels, launcher, OSD: fast (0.1 slow .. 4.0 fastest); enabled = false turns them off
+[shell.animation]
+enabled = true
+speed = 3.0
+
 # single vertical bar on the left (no top or bottom bar)
 [bar.main]
 position = "left"
@@ -44,7 +49,7 @@ end = ["tray", "network", "bluetooth", "volume", "battery", "control-center"]
 enabled = true
 fill_mode = "crop"
 transition = ["fade"]
-transition_duration = 800
+transition_duration = 300
 directory = "@HOME@/Pictures/Wallpapers"
 
 [wallpaper.default]
@@ -66,6 +71,7 @@ blurred_desktop = true
 blur_intensity = 0.7
 tint_intensity = 0.35
 transition = ["fade"]
+transition_duration = 100
 
 # lock after 60 min idle, screen off 1 min later
 [idle.behavior.lock]

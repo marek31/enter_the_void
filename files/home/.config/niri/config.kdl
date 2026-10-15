@@ -94,8 +94,9 @@ spawn-at-startup "update-notify"
 spawn-at-startup "easyeffects" "--service-mode" "--hide-window"   // speaker tuning (Dolby preset), no window
 spawn-at-startup "kdeconnect-indicator"   // KDE Connect daemon + tray icon (phone link)
 
+// Super fast: ~4x quicker than niri's defaults, still shows where windows move. Use `off` instead to disable.
 animations {
-    slowdown 0.9
+    slowdown 0.25
 }
 
 debug {

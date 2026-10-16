@@ -264,6 +264,7 @@ EOF
     put 755 /usr/local/bin/plasma-noctalia-colors < "$FILES/plasma-noctalia-colors"
     tpl "$FILES/plasma-void-config" | put 755 /usr/local/bin/plasma-void-config
     tpl "$FILES/plasma-displays" | put 755 /usr/local/bin/plasma-displays
+    put 755 /usr/local/bin/plasma-keys < "$FILES/plasma-keys"
     put 644 /usr/local/share/wayland-sessions/plasma-void.desktop <<'EOF'
 [Desktop Entry]
 Name=Plasma (Void)

@@ -3,7 +3,7 @@
 # are written, everything else in the files stays (kdeglobals is shared with KDE apps under niri and Noctalia).
 # Run by plasma-void-session before Plasma starts, once per VERSION, so later changes made in System Settings
 # are kept. Bump VERSION after changing a value here.
-VERSION=2   # 2: Show Desktop on Meta+Shift+D, Meta+P left to Plasma's screen switcher
+VERSION=3   # 2: Show Desktop on Meta+Shift+D, Meta+P left to Plasma's screen switcher; 3: Meta+Shift+/ cheat sheet
 stamp=${XDG_STATE_HOME:-$HOME/.local/state}/enter_void/plasma-config.version
 [ "$(cat "$stamp" 2>/dev/null)" = "$VERSION" ] && exit 0
 set -e
@@ -68,6 +68,8 @@ app helium.desktop Meta+B
 app floorp.desktop Meta+Shift+B
 app thunar.desktop Meta+E
 app org.pulseaudio.pavucontrol.desktop Meta+A
+# key cheat sheet full screen, like niri's hotkey overlay; Qt names Shift+/ "?" on the US/Polish layout
+app plasma-keys.desktop "Meta+?${T}Meta+Shift+/"
 # Meta+P stays Plasma's screen switcher (extend / mirror); KeePassXC has no key here. Version 1 had it there:
 app org.keepassxc.KeePassXC.desktop none
 

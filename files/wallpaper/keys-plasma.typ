@@ -3,7 +3,7 @@
 #import "keys-style.typ": *
 
 #show: sheet.with("Plasma  ·  x1-void",
-  [Meta = Super  ·  keys mirror niri where they can  ·  System Settings > Keyboard > Shortcuts lists all  ·  read this: Meta+Shift+D shows the desktop], size: 14.6pt, cols: 3)
+  [Meta = Super  ·  keys mirror niri where they can  ·  Meta+Shift+/ shows this sheet (Esc closes)  ·  Meta+Shift+D shows the desktop], size: 14.6pt, cols: 3)
 
 #section(blue, "Apps",
   ("Meta", "application menu"),
@@ -17,6 +17,7 @@
 )
 
 #section(violet, "Desktop",
+  ("Meta+Shift+/", "this sheet full screen"),
   ("Meta+V", "clipboard history"),
   ("Meta+.", "emoji"),
   ("Meta+O / W", "overview"),

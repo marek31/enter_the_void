@@ -4,7 +4,7 @@
 - Void Linux workstation on a ThinkPad X1 Carbon Gen 10 (21CC, i5-1250P, Iris Xe, 16 GB, 512 GB NVMe, 2560x1440, AX211, SOF audio, Synaptics 06cb:00fc fingerprint, USB4).
 - Reproducible from a GitHub repo: one script from the live ISO, re-runnable setup afterwards.
 - btrfs + snapper, snapshots every 15 min; caches, temp files, logs, swap and the snapshots themselves excluded.
-- Wayland only: niri + Noctalia. Helium + Floorp. LibreOffice. Wifi printers + scanners. Fingerprint login for sudo and the lock screen.
+- Wayland only: niri + Noctalia, KDE Plasma 6 as a second session chosen at login, configured to look like the niri one (panel on the left). Helium + Floorp. LibreOffice. Wifi printers + scanners. Fingerprint login for sudo and the lock screen.
 - Resilio Sync and pCloud installed but started by hand.
 - Hardened against network attacks. sudo password at most once per day. TLP for battery.
 - Host `x1-void`, user Marek, Polish programmer's keyboard, Europe/Warsaw. Open-licence fonts usable on Windows too.
@@ -45,6 +45,8 @@
 - **No systemd (frozen):** runit + elogind only. This rules out systemd timers, suspend-then-hibernate and systemd-cryptenroll TPM unlock; cron and battery-guard replace the first two.
 - **Key bindings:** one grammar: Mod+dir focus, +Ctrl move window, +Shift send column (workspace up/down, monitor left/right), +Alt resize; H/J/K/L = arrows; focus and move cross into the next workspace/monitor at the edge (`*-or-monitor-*`, `*-or-workspace-*`). Windows habits where they do not clash (Super+V clipboard, Super+. emoji, Ctrl+Shift+Esc, Alt+Tab); screenshots only on PrtSc: PrtSc whole screen, Shift region, Alt window, Ctrl annotate. No Ctrl+Alt+key binds because IDEs use them; lock moved to Super+Esc so Super+Alt+L can resize. All 140 binds checked against the niri 26.04 action list and for duplicates.
 - **Fonts:** Void packages plus JetBrains Mono and Cascadia Code from their GitHub releases, which Void doesn't package. All are OFL/Apache, the same files install on Windows.
+- **Wifi on the first boot:** the AX211 needs `iwlwifi` + `linux-firmware-network`, which `linux-base` (pulled by the kernel) depends on, on the live ISO and on the installed system alike; if the live ISO is online over wifi, so is the install. install.sh turns every WPA-PSK network in the live session's `/etc/wpa.conf` / `/etc/wpa_supplicant/*.conf` into a NetworkManager keyfile (`/etc/NetworkManager/system-connections`, 600), so no password is typed again. `linux-firmware-intel` (i915 GuC/HuC/DMC) is listed explicitly: `linux-firmware` does not depend on it.
+- **Second session, KDE Plasma 6:** `kde-plasma` from xbps. `plasma-void-session` = `dbus-run-session startplasma-wayland` (Plasma's own plasma.desktop has no session bus without systemd). tuigreet lists only `/usr/local/share/wayland-sessions` (F3, `--remember-session`); `/usr/share`'s niri.desktop needs systemd and X11 is out of scope. Look: a look-and-feel package `org.enter_void.desktop` (dotfile) holds only the layout script (one 40 px left panel: kickoff, pager, icon tasks, tray, clock; wallpaper); Plasma runs it on the first start without a layout, the rest falls back to Breeze. kdeglobals/kwinrc/kcminputrc/kxkbrc: fonts, icons, cursor, keyboard, no borders, animations off, 4 desktops. Colours: `plasma-noctalia-colors` (autostart) applies Noctalia's `noctalia.colors` when it changed. Keyring: KWallet off, gnome-keyring secrets started by autostart, so both sessions share one store. Plasma needs XDG autostart for what niri spawns itself (pipewire, keyring, EasyEffects, update-notify); those entries are `OnlyShowIn=KDE` so nothing in niri starts them twice. Shortcuts (kglobalshortcutsrc) mirror the main niri keys; Plasma defaults on the same keys (Meta+Q activities, Meta+D peek, Meta+1..4 task entries) are set to none.
 
 - **Printer autodetection:** network printers are found with avahi (mDNS, allowed through the firewall from the LAN) and get a CUPS queue from cups-browsed. Void's cups-browsed defaults to `CreateIPPPrinterQueues LocalOnly`, which only covers USB, so setup.sh appends `All`. USB printers: ipp-usb runs constantly (Void's README says udev-only start is unreliable at boot), and system-config-printer-udev adds classic USB printers when they're plugged in.
 - **Audio:** PipeWire mixes every app; pavucontrol (Mod+A) handles per-app volume and output, qpwgraph handles routing. Void ships bluetooth audio separately as `libspa-bluetooth`; without it headphones pair but never show up as an output.
@@ -79,6 +81,14 @@
 - At shutdown elogind revokes the seat before runit stops niri, so niri logs DRM "page flip ... permission denied" warnings until it is killed. Harmless; niri-void-session sends niri's log to ~/.local/state/niri/<date>-niri.log (14 days kept) so it no longer shows on the console.
 - thermald needs Intel thermal zones; without them (VM) it exits and runit restarts it every 2 s, flooding socklog. setup.sh enables it only on Intel hardware with /sys/class/thermal/thermal_zone* and not under VMware.
 - Noctalia Greeter in VMware: its wlroots compositor fails to import the client's dmabuf on vmwgfx (`wlr_linux_dmabuf_v1: Failed to close buffer handle ... Invalid argument`, client disconnected, blank screen). Under VMware greetd runs it with `WLR_RENDERER=pixman LIBGL_ALWAYS_SOFTWARE=1`. Debug: put `env NOCTALIA_GREETER_LOG=/tmp/greeter.log WLR_LOG=debug` in front of the greetd command.
+- Plasma dotfiles (kdeglobals, kwinrc, kglobalshortcutsrc, ...) are rewritten by Plasma itself, so `refresh.sh` will replace them (old ones to ~/.backup) whenever they differ: settings changed in System Settings are lost on refresh. The panel layout lives in plasma-org.kde.plasma.desktop-appletsrc, which the repo does not ship, so it is never touched.
+- refresh.sh is not VM-only: it is the way to apply repo changes to any running install. Normal updates (xu, cron) never need it.
+- BitLocker and the speakers step: suspending BitLocker only stores the key in clear, the volume stays encrypted (lsblk shows `BitLocker`, not `ntfs`), so `setup.sh speakers` finds no Windows partition and skips. It works only on an unencrypted C:; there is no dislocker step.
+- Java/Swing apps (IBKR TWS, Ghidra) are blank under xwayland-satellite unless `_JAVA_AWT_WM_NONREPARENTING=1` (niri's Application Issues page); set in niri's environment block, harmless for other apps. TWS is IBKR's install4j installer with a bundled JRE, installed per user into ~/Jts and self-updating, so it is not scripted here. Under fractional scale 1.25 X11 apps may look soft (not checked); TWS has its own font size setting.
+- Unverified Plasma assumptions (checked from memory, not on a machine): a look-and-feel package with only `contents/layouts` falls back to Breeze for the rest; `panel.floating` exists in the Plasma 6 scripting API (if not, the panel floats, set it in panel settings); Noctalia's kcolorscheme template writes `~/.local/share/color-schemes/noctalia.colors` (inferred from qt6ct listing "noctalia (KColorScheme)").
+- Plasma under refresh.sh: Noctalia is restarted only when `XDG_CURRENT_DESKTOP=niri`, otherwise it would draw a second bar inside Plasma.
+- Plasma display scale and touchpad (tap-to-click, natural scrolling) are not preset: KDE keys them by output/device name. Set them once in System Settings.
+- Plasma's powerdevil switches TLP profiles through tlp-pd (same D-Bus API as power-profiles-daemon); its own idle defaults (dim, screen off, suspend) apply in Plasma, Noctalia's in niri.
 - `sv` commands do nothing inside the chroot; services are enabled by symlinks in `/etc/runit/runsvdir/default`.
 
 ## To do later
@@ -111,12 +121,18 @@ Open items from the 2026-10-14/15 sessions. Tick them off here when done.
 - [ ] Off-machine backups: target for restic (pCloud via rclone or an external disk) + schedule.
 - [ ] Tools offered but not added: `nodejs` + `mise`, `qemu`/`libvirt`/`virt-manager` (+ libvirtd service), PowerShell 7 (tarball), the rest of the dev list (git: delta/difftastic/git-absorb/tig, debug: gdb/lldb/valgrind/perf/hotspot, LSPs: clangd/gopls/ruff, shell: atuin/direnv/hyperfine/xh/yazi/...).
 
+- [ ] Plasma (untested, 2026-10-16): F3 lists both sessions; left panel on first login; sound, keyring (Helium passwords), Super+Q/D/Return; `noctalia.colors` path matches what Noctalia writes.
+- [ ] IBKR TWS: install, log in (IBKR Mobile 2FA), check that windows are not blank and dialogs open usable in niri and Plasma.
+- [ ] Is C: BitLocker-encrypted on the X1? If yes, the speakers step cannot read the Dolby tuning (see gotchas).
+- [ ] Wifi carry-over: after the first boot `nmcli connection` shows the live-session network and it connects.
+
 **VM only**
 - [ ] `KERNEL_BORE=no` in /usr/local/lib/enter_void/config.sh (an hours-long build tells nothing new).
 - [ ] Bridged network adapter for printer / KDE Connect tests; more RAM/CPU for builds. (open-vm-tools is installed automatically under VMware since 2026-10-15; never run VMware's own Tools installer from the virtual CD.)
 
 ## Current functionality
-install.sh: wipe or free-space mode, ESP + plain /boot + LUKS2, btrfs subvolumes, bootstrap, fstab, grub, then setup.sh in a chroot.
+install.sh: wipe or free-space mode, ESP + plain /boot + LUKS2, btrfs subvolumes, bootstrap, fstab, live-session wifi -> NetworkManager, grub, then setup.sh in a chroot.
+Login (tuigreet, F3): niri + Noctalia (default) or KDE Plasma 6.
 setup.sh steps: base (host, tz, locale, console), packages, user (groups, sudo, fingerprint for sudo), security, snapper, login, desktop (services, audio, TLP, fonts, dconf theme, dotfiles), apps (Helium, Floorp, Resilio, pCloud installer, fonts, cursor, Noctalia), devtools (rustup, Claude Code, agy, omp), kernel (BORE build, cron-driven), finish (initramfs + grub).
 
 ## Changelog
@@ -163,4 +179,7 @@ setup.sh steps: base (host, tz, locale, console), packages, user (groups, sudo, 
 - 2026-10-15: refresh.sh restarts Noctalia only inside niri (`WAYLAND_DISPLAY` set), logs it to `~/.local/state/noctalia/<date>-noctalia.log` and reports when it fails to start (was: output to /dev/null, grey screen with no clue).
 - 2026-10-15: caffeine (keep awake) removed: control center tiles = Noctalia's default set without it, Super+Ctrl+I unbound.
 - 2026-10-15: Num Lock off at login (dropped `numlock` from niri's keyboard input).
+- 2026-10-16: wifi from the live session copied into NetworkManager (first boot online without a cable); linux-firmware-intel listed explicitly.
+- 2026-10-16: niri sets `_JAVA_AWT_WM_NONREPARENTING=1` (IBKR TWS); README: wifi check on the live stick before touching the disk, TWS install, refresh.sh scope, BitLocker blocks the speakers step.
+- 2026-10-16: KDE Plasma 6 as a second session (tuigreet F3), minimal look matching niri: left panel, no borders, no animations, Noctalia palette, shared keyring, niri-like shortcuts. refresh.sh restarts Noctalia only in niri.
 - 2026-10-15: README install guide: ISO choice + checksum, Rufus DD mode, Windows prep (BitLocker, Fast Startup, shrink C:), BIOS, partition modes and config.sh options.

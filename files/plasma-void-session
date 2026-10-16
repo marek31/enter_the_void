@@ -1,0 +1,8 @@
+#!/bin/sh
+# KDE Plasma session for runit systems: startplasma-wayland needs a session bus (systemd would give one).
+# Started by the greeter (greetd). Log: ~/.local/state/plasma/<date>-plasma.log, 14 days kept.
+export XDG_SESSION_TYPE=wayland
+logdir=${XDG_STATE_HOME:-$HOME/.local/state}/plasma
+mkdir -p "$logdir"
+find "$logdir" -name '*-plasma.log' -mtime +14 -delete 2>/dev/null
+exec dbus-run-session startplasma-wayland >>"$logdir/$(date +%F)-plasma.log" 2>&1

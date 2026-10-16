@@ -11,8 +11,9 @@ sudo ./setup.sh packages security apps login devtools speakers dotfiles
 # bar changes made in Settings (Mod+Comma) win over the repo's config.toml
 grep -Eqs '^\[(bar|widget)' ~/.local/state/noctalia/settings.toml &&
     echo "note: ~/.local/state/noctalia/settings.toml overrides the bar; remove its [bar...]/[widget...] sections to get the repo look"
-# restart only from inside the desktop: from a text console the new Noctalia has no display and dies
-if [ -z "$WAYLAND_DISPLAY" ]; then
+# restart only from inside niri: from a text console Noctalia has no display and dies, and under Plasma
+# it would draw a second bar
+if [ "$XDG_CURRENT_DESKTOP" != niri ] || [ -z "$WAYLAND_DISPLAY" ]; then
     echo "done - not inside niri, so Noctalia was not restarted (log out and back in to see changes)"
     exit 0
 fi

@@ -1,0 +1,15 @@
+[Windows]
+BorderlessMaximizedWindows=true
+
+[org.kde.kdecoration2]
+BorderSize=None
+BorderSizeAuto=false
+ButtonsOnLeft=
+ButtonsOnRight=IAX
+
+[Desktops]
+Number=4
+Rows=1
+
+[Plugins]
+shakecursorEnabled=false

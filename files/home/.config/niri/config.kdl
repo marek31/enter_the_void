@@ -81,6 +81,7 @@ environment {
     QT_QPA_PLATFORM "wayland;xcb"
     QT_QPA_PLATFORMTHEME "qt6ct"        // Qt/KDE apps take the Noctalia palette via qt6ct
     MOZ_ENABLE_WAYLAND "1"
+    _JAVA_AWT_WM_NONREPARENTING "1"     // Java/Swing apps (IBKR TWS) are blank under xwayland-satellite without it
 }
 
 // pipewire pulls in wireplumber + pipewire-pulse (see /etc/pipewire/pipewire.conf.d)

@@ -1,7 +1,7 @@
 # enter_void
 
 Scripts that turn a blank ThinkPad X1 Carbon Gen 10 into `x1-void`: Void Linux, btrfs + snapper every 15 min,
-niri + Noctalia on Wayland, Helium, Floorp, Firefox, Opera, LibreOffice, wifi printers and scanners, Resilio Sync and pCloud.
+niri + Noctalia on Wayland (KDE Plasma as a second session), Helium, Floorp, Firefox, Opera, LibreOffice, wifi printers and scanners, Resilio Sync and pCloud.
 No flatpak, no snap. All decisions are listed (and editable) in [config.sh](config.sh).
 
 ## Install
@@ -19,6 +19,9 @@ No flatpak, no snap. All decisions are listed (and editable) in [config.sh](conf
 ### 2. Before booting it: Windows (dual boot only)
 
 Skip this when the whole disk is wiped.
+
+0. **Wifi check first:** boot the stick once (step 3) and connect to wifi as in step 5, before changing anything on the disk.
+   If the stick gets online, the installed system will too (same driver and firmware).
 
 1. **BitLocker:** write down the recovery key (`manage-bde -protectors -get C:` in an admin PowerShell) and suspend protection
    (Control Panel > BitLocker > Suspend protection). Turning Secure Boot off otherwise makes Windows ask for that key.
@@ -64,7 +67,10 @@ Settings worth a look in [config.sh](config.sh) before running it:
 ### 5. Run the installer
 
 Log in as `root` / `voidlinux` and get online. USB ethernet just works. For wifi, find the interface with `ip link` (AX211 is usually `wlp0s20f3`), then
-`wpa_passphrase SSID PASS > /etc/wpa.conf; wpa_supplicant -B -i wlp0s20f3 -c /etc/wpa.conf; dhcpcd wlp0s20f3`. Then:
+`wpa_passphrase SSID PASS > /etc/wpa.conf; wpa_supplicant -B -i wlp0s20f3 -c /etc/wpa.conf; dhcpcd wlp0s20f3`.
+The live ISO already has the AX211 driver and firmware (`linux-firmware-network`, pulled in by the kernel), so no cable is needed.
+install.sh copies this network (WPA-PSK) into NetworkManager, so the installed system connects by itself at the first boot.
+No wifi on the stick? A phone with USB tethering on the USB-C port works without drivers. Then:
 
 ```sh
 xbps-install -Sy xbps git
@@ -94,10 +100,24 @@ If Windows ever boots straight to itself after an update, pick Void with F12 or 
 | Look | Super+, -> Theme: pick another palette, or "wallpaper" to derive colours from the wallpaper; every app follows |
 | BORE kernel | built automatically after the first boot when on AC (about an hour), or now: `sudo ~/enter_void/setup.sh kernel`; check with `uname -r` (ends in `-bore`) |
 | Dev tools | `claude`, `agy` (Antigravity CLI), `omp` (oh-my-pi), `deno`, `cargo`/`rustup`, `go`, `sbcl` (Common Lisp) - log in to each on first run |
-| Speakers | EasyEffects with Lenovo's Dolby tuning for this X1, made from the Windows driver on the first `refresh.sh` / `sudo ~/enter_void/setup.sh speakers` (needs the Windows partition) |
+| Speakers | EasyEffects with Lenovo's Dolby tuning for this X1, made from the Windows driver: `sudo ~/enter_void/setup.sh speakers` once after the first login (needs a readable Windows partition: with BitLocker on, even suspended, C: is still encrypted and the step is skipped) |
+| Interactive Brokers TWS | Linux build from IBKR (bundled Java, installs into your home, no sudo): download [tws-latest-standalone-linux-x64.sh](https://download2.interactivebrokers.com/installers/tws/latest-standalone/tws-latest-standalone-linux-x64.sh) (or [stable](https://download2.interactivebrokers.com/installers/tws/stable-standalone/tws-stable-standalone-linux-x64.sh)), then `sh ~/Downloads/tws-*-linux-x64.sh`. It runs through XWayland; niri sets `_JAVA_AWT_WM_NONREPARENTING=1` so its windows are not blank |
 | Phone | KDE Connect: install the KDE Connect app on the phone, same Wi-Fi, pair from the tray icon (firewall opens 1714-1764 to the LAN only) |
 | Remote desktop | `rustdesk` (start it when needed, no background service), Remmina for RDP/VNC |
 | Backups | snapshots are not backups: `restic` + `rclone` are installed, e.g. `restic -r rclone:pcloud:backup init` |
+
+## niri or KDE Plasma
+
+Both are installed. At the login screen press **F3** and pick `Niri (Void)` or `Plasma (Void)`; the last choice is remembered.
+To switch: log out (niri: Super+Shift+E, Plasma: Super+Shift+E or Ctrl+Alt+Del), F3, pick the other one.
+
+Plasma is set up to look like the niri desktop: one thin panel on the left edge (launcher, desktops, open apps, tray, clock),
+no window borders, maximised windows without a title bar border, animations off, Inter / JetBrains Mono / Papirus / Bibata,
+Hokusai wallpaper, the Noctalia palette (taken over at the next Plasma login after you change it in niri), the same keyring.
+The main keys match: Super+Return terminal, Super+D / Space launcher (KRunner), Super+Q close, Super+F maximise,
+Super+Shift+F fullscreen, Super+O overview, Super+1..4 / Shift desktop, Super+B / Shift+B / E / A / P apps, Super+Esc lock,
+Super+V clipboard, Super+. emoji. Plasma tiling: Super+T.
+Panel back to the repo layout: `plasma-apply-lookandfeel -a org.enter_void.desktop --resetLayout`.
 
 ## Daily use
 
@@ -139,7 +159,10 @@ sudo snapper-rollback N    # make snapshot N the new / (reboot afterwards)
 sudo ~/enter_void/setup.sh apps    # update Helium, Floorp, Resilio, fonts, Noctalia now (cron: once a day, on AC with battery above 80 %)
 ```
 
-After a `git pull` with look changes: `~/enter_void/refresh.sh` (normal runs never overwrite your dotfiles).
+Updates need no repo: `xu` for packages, cron for the upstream apps. `~/enter_void/refresh.sh` is only for taking changes
+made to this repo onto a running system (VM or laptop, dual boot makes no difference). It replaces every dotfile that differs from the repo,
+including your own edits to niri/foot/fish configs and anything changed in Plasma's System Settings (old files go to `~/.backup`;
+Noctalia's Settings live in `~/.local/state` and are kept), so skip it if you have tuned things by hand.
 
 `setup.sh` can be re-run any time, whole or per step: `base packages user security snapper login desktop apps devtools kernel finish`.
 Logs: `/var/log/enter_void/`.

@@ -257,6 +257,17 @@ Exec=/usr/local/bin/niri-void-session
 Type=Application
 DesktopNames=niri
 EOF
+    # Plasma's own plasma.desktop starts without a session bus (systemd would provide one)
+    put 755 /usr/local/bin/plasma-void-session < "$FILES/plasma-void-session"
+    put 755 /usr/local/bin/plasma-noctalia-colors < "$FILES/plasma-noctalia-colors"
+    put 644 /usr/local/share/wayland-sessions/plasma-void.desktop <<'EOF'
+[Desktop Entry]
+Name=Plasma (Void)
+Comment=KDE Plasma 6 on Wayland, runit session
+Exec=/usr/local/bin/plasma-void-session
+Type=Application
+DesktopNames=KDE
+EOF
     local cmd
     if [[ $GREETER == noctalia ]] && build_greeter && command -v noctalia-greeter-session >/dev/null; then
         log "login: Noctalia Greeter"
@@ -276,7 +287,11 @@ EOF
     else
         log "login: tuigreet (text)"
         install -d -o _greeter -g _greeter /var/cache/tuigreet
-        cmd="tuigreet --time --remember --asterisks --greeting '$HOSTNAME' --cmd /usr/local/bin/niri-void-session"
+        # F3 = session menu (niri / Plasma), last choice remembered. Only our runit-ready entries are listed:
+        # /usr/share's niri.desktop needs systemd, X11 sessions are out of scope.
+        cmd="tuigreet --time --remember --remember-session --asterisks --greeting '$HOSTNAME  -  F3: niri / Plasma'"
+        cmd+=" --sessions /usr/local/share/wayland-sessions --xsessions /usr/local/share/xsessions"
+        cmd+=" --cmd /usr/local/bin/niri-void-session"
     fi
     # takes effect at the next login; greetd is not restarted under a running session
     put 644 /etc/greetd/config.toml <<EOF

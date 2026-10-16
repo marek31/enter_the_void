@@ -3,7 +3,7 @@
 # CPU microcode (intel-ucode) is added by setup.sh after CPU detection.
 
 # --- base, boot, filesystem ---
-base-system void-repo-nonfree linux linux-firmware sof-firmware
+base-system void-repo-nonfree linux linux-firmware linux-firmware-intel sof-firmware   # -network (in linux-firmware) = AX211 wifi + bluetooth; -intel = Iris Xe GuC/HuC/DMC
 grub-x86_64-efi efibootmgr cryptsetup btrfs-progs compsize dracut
 snapper snapper-rollback python3-btrfsutil grub-btrfs inotify-tools os-prober
 chrony socklog-void cronie terminus-font
@@ -23,6 +23,9 @@ basu-devel sdbus-c++-devel libmd4c-devel tomlplusplus-devel libical-devel json-c
 polkit-devel librsvg-devel libqalculate-devel libxml2-devel jemalloc-devel upower ddcutil
 # noctalia greeter build deps (its BUILDING docs, Void section) + avatars
 wlroots0.20-devel libinput-devel accountsservice
+
+# --- second session: KDE Plasma 6 (Wayland), picked at login with F3 in tuigreet ---
+kde-plasma
 
 # --- hardware: Intel Iris Xe, AX211 wifi, SOF audio, Synaptics 06cb:00fc fingerprint, USB4 ---
 mesa-dri mesa-vulkan-intel intel-media-driver vulkan-loader libva-utils

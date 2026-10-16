@@ -165,6 +165,47 @@ BOOT_UUID=$(blkid -s UUID -o value "$BOOT")
     echo "/swap/swapfile none swap defaults 0 0"
 } > /mnt/etc/fstab
 
+# Wifi joined on the live ISO (README: /etc/wpa.conf) -> NetworkManager profiles, so the first boot is online
+# without typing the password again. WPA-PSK only (hex from wpa_passphrase, or a quoted passphrase).
+wifi_to_nm() {
+    local f srcs=() ssid psk n=0 dir=/mnt/etc/NetworkManager/system-connections
+    for f in /etc/wpa.conf /etc/wpa_supplicant/*.conf; do [[ -f $f ]] && srcs+=("$f"); done
+    (( ${#srcs[@]} )) || return 0
+    while IFS=$'\t' read -r ssid psk; do
+        mkdir -p "$dir"
+        f=$dir/${ssid//[^A-Za-z0-9._-]/_}.nmconnection
+        (umask 077; cat > "$f" <<EOF
+[connection]
+id=$ssid
+uuid=$(cat /proc/sys/kernel/random/uuid)
+type=wifi
+autoconnect=true
+
+[wifi]
+mode=infrastructure
+ssid=$ssid
+
+[wifi-security]
+key-mgmt=wpa-psk
+psk=$psk
+
+[ipv4]
+method=auto
+
+[ipv6]
+method=auto
+EOF
+        )
+        n=$((n + 1))
+    done < <(awk '
+        /network[[:space:]]*=[[:space:]]*\{/ { s = p = "" }
+        /^[[:space:]]*ssid="/ { s = $0; sub(/^[[:space:]]*ssid="/, "", s); sub(/"[[:space:]]*$/, "", s) }
+        /^[[:space:]]*psk=/   { p = $0; sub(/^[[:space:]]*psk=/, "", p); sub(/[[:space:]]*$/, "", p); gsub(/^"|"$/, "", p) }
+        /^[[:space:]]*\}/     { if (s != "" && p != "") print s "\t" p; s = p = "" }' "${srcs[@]}")
+    log "wifi: $n network(s) from the live session copied to NetworkManager"
+}
+wifi_to_nm
+
 CMDLINE="loglevel=4 apparmor=1 security=apparmor zswap.enabled=0"   # swap = plain swapfile, no RAM compression
 mkdir -p /mnt/etc/dracut.conf.d
 if [[ $ENCRYPT == yes ]]; then

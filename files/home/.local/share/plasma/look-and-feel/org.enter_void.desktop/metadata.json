@@ -1,0 +1,11 @@
+{
+    "KPackageStructure": "Plasma/LookAndFeel",
+    "KPlugin": {
+        "Id": "org.enter_void.desktop",
+        "Name": "enter_void",
+        "Description": "Breeze with one thin panel on the left edge",
+        "License": "MIT",
+        "Authors": [{ "Name": "Marek" }]
+    },
+    "X-Plasma-APIVersion": "2"
+}

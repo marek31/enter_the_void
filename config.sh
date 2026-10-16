@@ -3,7 +3,7 @@
 #
 # Decisions (2026-10-14):
 #   distro      Void Linux x86_64 glibc, runit, no flatpak/snap/AppImage-runtime
-#   target      ThinkPad X1 Carbon Gen 10 (21CC): i5-1250P, Iris Xe, 16 GB, 512 GB NVMe, 2560x1440,
+#   target      ThinkPad X1 Carbon Gen 10 (21CC): i5-1250P, Iris Xe, 16 GB, 512 GB NVMe, 14" 1920x1200,
 #               AX211 wifi, SOF audio, Synaptics 06cb:00fc fingerprint reader, USB4/Thunderbolt
 #   disk        X1: dual boot - Void goes into the 97 GiB unallocated between C: and Windows Recovery,
 #               sharing Windows' 260 MB EFI partition (grub next to Windows Boot Manager, os-prober menu).
@@ -45,9 +45,10 @@ TIMEZONE=Europe/Warsaw
 LANG_UI=en_US.UTF-8     # program language
 LANG_FORMATS=pl_PL.UTF-8 # dates, money, paper (A4), units
 CONSOLE_KEYMAP=pl2
-CONSOLE_FONT=ter-v24n   # readable on the 2560x1440 14" panel
+CONSOLE_FONT=ter-v24n   # readable on the 1920x1200 14" panel
 XKB_LAYOUT=pl           # "pl" basic variant == Polish (programmer's)
-DISPLAY_SCALE=1.25      # eDP-1 in niri; 1.0-1.5 are sane on this panel
+DISPLAY_SCALE=1.25      # laptop panel (eDP-1, 1920x1200 14") in niri and Plasma; 1.0-1.5 are sane
+DISPLAY_SCALE_4K=1.5    # external 4K monitors (Dell G3223Q 32"); Windows uses 150 % on it
 
 INSTALL_MODE=""         # free = new partition in the largest unallocated area, keep Windows (dual boot)
                         # wipe = erase a whole disk; empty = install.sh asks (default free if there is space)

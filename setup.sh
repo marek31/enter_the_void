@@ -42,7 +42,7 @@ put() {
 # fill @PLACEHOLDERS@ in a template from config.sh
 tpl() {
     sed -e "s|@USER@|$USERNAME|g" -e "s|@HOME@|$UHOME|g" -e "s|@HOSTNAME@|$HOSTNAME|g" \
-        -e "s|@XKB@|$XKB_LAYOUT|g" -e "s|@SCALE@|$DISPLAY_SCALE|g" -e "s|@RESILIO_PORT@|$RESILIO_PORT|g" "$1"
+        -e "s|@XKB@|$XKB_LAYOUT|g" -e "s|@SCALE@|$DISPLAY_SCALE|g" -e "s|@SCALE_4K@|$DISPLAY_SCALE_4K|g" -e "s|@RESILIO_PORT@|$RESILIO_PORT|g" "$1"
 }
 # setkv <file> <KEY> <value>: set KEY="value" in a shell-style config, uncommenting or appending
 setkv() {
@@ -261,6 +261,7 @@ EOF
     put 755 /usr/local/bin/plasma-void-session < "$FILES/plasma-void-session"
     put 755 /usr/local/bin/plasma-noctalia-colors < "$FILES/plasma-noctalia-colors"
     tpl "$FILES/plasma-void-config" | put 755 /usr/local/bin/plasma-void-config
+    tpl "$FILES/plasma-displays" | put 755 /usr/local/bin/plasma-displays
     put 644 /usr/local/share/wayland-sessions/plasma-void.desktop <<'EOF'
 [Desktop Entry]
 Name=Plasma (Void)

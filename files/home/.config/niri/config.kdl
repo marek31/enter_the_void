@@ -22,8 +22,14 @@ input {
     warp-mouse-to-focus
 }
 
-output "eDP-1" {
+// Native modes (read from the X1's EDIDs in Windows, 2026-10-16). Check names/modes: niri msg outputs
+output "eDP-1" {                            // X1 panel: 14" 1920x1200 (LEN403A)
+    mode "1920x1200"                        // no refresh given = the highest one at this size
     scale @SCALE@
+}
+output "Dell Inc. DELL G3223Q 5CM14P3" {    // 32" 4K, matched by make/model/serial on any port
+    mode "3840x2160"                        // 60 Hz over the X1's HDMI 2.0; more only over DP/USB-C
+    scale @SCALE_4K@
 }
 
 // Look: one accent colour, thin ring, no borders, soft shadow, generous gaps.

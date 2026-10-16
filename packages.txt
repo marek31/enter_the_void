@@ -26,6 +26,7 @@ wlroots0.20-devel libinput-devel accountsservice
 
 # --- second session: KDE Plasma 6 (Wayland), picked at login with F3 in tuigreet ---
 kde-plasma
+spectacle                                     # Plasma screenshots on PrtSc (not part of kde-plasma)
 
 # --- hardware: Intel Iris Xe, AX211 wifi, SOF audio, Synaptics 06cb:00fc fingerprint, USB4 ---
 mesa-dri mesa-vulkan-intel intel-media-driver vulkan-loader libva-utils
@@ -38,6 +39,7 @@ pipewire wireplumber wireplumber-elogind libspa-bluetooth alsa-ucm-conf alsa-pip
 # X1 speakers: EasyEffects + Lenovo's own Dolby tuning, converted on the laptop (setup.sh speakers)
 easyeffects lsp-plugins python3-numpy python3-scipy python3-rich
 NetworkManager network-manager-applet bluez blueman wireguard-tools nftables apparmor
+tailscale                                     # mesh VPN to your own devices; `sudo tailscale up` once to log in
 
 # --- printing (wifi/IPP Everywhere) and scanning (eSCL/AirScan) ---
 cups cups-filters cups-browsed cups-pk-helper system-config-printer system-config-printer-udev gutenprint hplip

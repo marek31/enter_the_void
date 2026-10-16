@@ -165,6 +165,8 @@ ipv6.ip6-privacy=2
 EOF
     sv_disable sshd dhcpcd wpa_supplicant acpid power-profiles-daemon
     sv_enable nftables
+    # Tailscale daemon: idle until `sudo tailscale up` logs the machine in (the firewall trusts tailscale0)
+    sv_enable tailscaled
     # Root login is only useful as an attack target once the user can sudo.
     if [[ $(passwd -S "$USERNAME" | awk '{print $2}') == P ]] && id -nG "$USERNAME" | grep -qw wheel; then
         passwd -l root >/dev/null
@@ -329,10 +331,29 @@ copy_dotfiles() {
     done < <(find "$FILES/home" -type f -print0)
 }
 
+# Key cheat sheets as wallpapers (niri, Plasma): typst renders files/wallpaper/*.typ to 3840x2400 PNGs.
+# Rendered as root (the repo may sit in /root during the install), then handed to the user; atomic replace.
+make_wallpapers() {
+    local n out tmp
+    command -v typst >/dev/null || { warn "typst missing - key wallpapers not rendered"; return 0; }
+    as_user mkdir -p "$UHOME/Pictures/Wallpapers"
+    for n in niri plasma; do
+        out=$UHOME/Pictures/Wallpapers/keys-$n.png
+        tmp=$(mktemp --suffix=.png)
+        if typst compile --format png --ppi 216 "$FILES/wallpaper/keys-$n.typ" "$tmp"; then
+            install -o "$USERNAME" -g "$USERNAME" -m 644 "$tmp" "$out.tmp" && mv -f "$out.tmp" "$out"
+        else
+            warn "keys-$n.typ did not render (a second page means the text is too big: lower size in it)"
+        fi
+        rm -f "$tmp"
+    done
+}
+
 # Not part of "all": take the repo's current dotfiles, e.g. after a git pull with look changes.
 step_dotfiles() {
     log "dotfiles: replacing changed ones with the repo version"
     copy_dotfiles replace
+    make_wallpapers
     log "log out and back in (or: pkill noctalia; setsid -f noctalia) to see the changes"
 }
 
@@ -438,6 +459,7 @@ EOF
         rm -f "$wp"
         warn "wallpaper download failed; put any image into ~/Pictures/Wallpapers"
     fi
+    make_wallpapers   # the default wallpapers: key cheat sheets (Great Wave stays as an alternative)
     if [[ $HERE != "$UHOME/enter_void" ]]; then   # keep a copy for later re-runs
         rm -rf "$UHOME/enter_void"
         cp -r "$HERE" "$UHOME/enter_void"

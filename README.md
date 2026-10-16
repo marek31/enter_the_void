@@ -103,6 +103,8 @@ If Windows ever boots straight to itself after an update, pick Void with F12 or 
 | Speakers | EasyEffects with Lenovo's Dolby tuning for this X1, made from the Windows driver: `sudo ~/enter_void/setup.sh speakers` once after the first login (needs a readable Windows partition: with BitLocker on, even suspended, C: is still encrypted and the step is skipped) |
 | Interactive Brokers TWS | Linux build from IBKR (bundled Java, installs into your home, no sudo): download [tws-latest-standalone-linux-x64.sh](https://download2.interactivebrokers.com/installers/tws/latest-standalone/tws-latest-standalone-linux-x64.sh) (or [stable](https://download2.interactivebrokers.com/installers/tws/stable-standalone/tws-stable-standalone-linux-x64.sh)), then `sh ~/Downloads/tws-*-linux-x64.sh`. It runs through XWayland; niri sets `_JAVA_AWT_WM_NONREPARENTING=1` so its windows are not blank |
 | Phone | KDE Connect: install the KDE Connect app on the phone, same Wi-Fi, pair from the tray icon (firewall opens 1714-1764 to the LAN only) |
+| Tailscale | `sudo tailscale up` once (opens a login link), then `sudo tailscale set --operator=$USER` so `tailscale status` / `tailscale up/down` work without sudo. The firewall trusts the tailnet (`tailscale0`): your own devices reach KDE Connect, Resilio etc. over it |
+| Key wallpapers | The default wallpapers are cheat sheets of the keys (niri and Plasma each have their own), rendered from `files/wallpaper/*.typ` into `~/Pictures/Wallpapers/keys-*.png`. Read them on an empty workspace (niri: Super+Page Down) or Meta+Shift+D (Plasma). Back to the Hokusai print: Noctalia Settings > Wallpaper, or `plasma-apply-wallpaperimage ~/Pictures/Wallpapers/great-wave.jpg`. On a Plasma set up before this change: `plasma-apply-wallpaperimage ~/Pictures/Wallpapers/keys-plasma.png` once |
 | Remote desktop | `rustdesk` (start it when needed, no background service), Remmina for RDP/VNC |
 | Backups | snapshots are not backups: `restic` + `rclone` are installed, e.g. `restic -r rclone:pcloud:backup init` |
 
@@ -115,7 +117,7 @@ Plasma is set up to look like the niri desktop: one thin panel on the left edge 
 no window borders, maximised windows without a title bar border, animations off, Inter / JetBrains Mono / Papirus / Bibata,
 Hokusai wallpaper, the Noctalia palette (taken over at the next Plasma login after you change it in niri), the same keyring.
 The main keys match: Super+Return terminal, Super+D / Space launcher (KRunner), Super+Q close, Super+F maximise,
-Super+Shift+F fullscreen, Super+O overview, Super+1..4 / Shift desktop, Super+B / Shift+B / E / A / P apps, Super+Esc lock,
+Super+Shift+F fullscreen, Super+O overview, Super+1..4 / Shift desktop, Super+B / Shift+B / E / A apps, Super+P screen switcher (Plasma's own), Super+Shift+D peek at desktop, Super+Esc lock,
 Super+V clipboard, Super+. emoji. Plasma tiling: Super+T.
 Panel back to the repo layout: `plasma-apply-lookandfeel -a org.enter_void.desktop --resetLayout`.
 

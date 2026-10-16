@@ -21,5 +21,5 @@ clock.writeConfig("showDate", false);
 desktopsForActivity(currentActivity()).forEach(function (d) {
     d.wallpaperPlugin = "org.kde.image";
     d.currentConfigGroup = ["Wallpaper", "org.kde.image", "General"];
-    d.writeConfig("Image", "file://@HOME@/Pictures/Wallpapers/great-wave.jpg");
+    d.writeConfig("Image", "file://@HOME@/Pictures/Wallpapers/keys-plasma.png");   // key cheat sheet
 });

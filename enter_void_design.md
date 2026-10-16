@@ -190,6 +190,7 @@ setup.sh steps: base (host, tz, locale, console), packages, user (groups, sudo, 
 - 2026-10-15: caffeine (keep awake) removed: control center tiles = Noctalia's default set without it, Super+Ctrl+I unbound.
 - 2026-10-15: Num Lock off at login (dropped `numlock` from niri's keyboard input).
 - 2026-10-16: wifi from the live session copied into NetworkManager (first boot online without a cable); linux-firmware-intel listed explicitly.
+- 2026-10-17: Plasma locks after 60 min idle (kscreenlockerrc, same as Noctalia), lock on resume; plasma-void-config VERSION 4. Powerdevil's own dim / screen-off / suspend timers are unchanged.
 - 2026-10-16: Plasma gets niri's Super+Shift+/ overlay: `plasma-keys` shows keys-plasma.png full screen in imv (same key or Esc closes), plasma-void-config VERSION 3; the cheat sheet becomes the Plasma wallpaper by autostart (`plasma-keys --wallpaper`, once per rendered image), also on Plasmas set up before it existed.
 - 2026-10-16: key cheat-sheet wallpapers for niri and Plasma (typst, 3840x2400, include screen/scale commands); Plasma: Meta+Shift+D peeks at the desktop, Meta+P back to Plasma's screen switcher (KeePassXC unbound), plasma-void-config VERSION 2; spectacle for Plasma screenshots. Tailscale (package, tailscaled service, firewall accepts tailscale0 + UDP 41641).
 - 2026-10-16: native screen modes: X1 panel is 1920x1200 (not 2560x1440), Dell G3223Q 4K at scale 1.5 (`DISPLAY_SCALE_4K`); niri output blocks + Plasma `plasma-displays` (kscreen-doctor, once per connector).

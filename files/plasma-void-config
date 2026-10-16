@@ -3,7 +3,8 @@
 # are written, everything else in the files stays (kdeglobals is shared with KDE apps under niri and Noctalia).
 # Run by plasma-void-session before Plasma starts, once per VERSION, so later changes made in System Settings
 # are kept. Bump VERSION after changing a value here.
-VERSION=3   # 2: Show Desktop on Meta+Shift+D, Meta+P left to Plasma's screen switcher; 3: Meta+Shift+/ cheat sheet
+VERSION=4   # 2: Show Desktop on Meta+Shift+D, Meta+P left to Plasma's screen switcher; 3: Meta+Shift+/ cheat sheet;
+            # 4: screen lock after 60 min idle
 stamp=${XDG_STATE_HOME:-$HOME/.local/state}/enter_void/plasma-config.version
 [ "$(cat "$stamp" 2>/dev/null)" = "$VERSION" ] && exit 0
 set -e
@@ -40,6 +41,11 @@ w kcminputrc --group Keyboard --key RepeatDelay 300
 w kcminputrc --group Keyboard --key RepeatRate 40
 w kcminputrc --group Mouse --key cursorTheme Bibata-Modern-Classic
 w kcminputrc --group Mouse --key cursorSize 24
+
+# lock after 60 min idle, as Noctalia does in niri (Timeout is in minutes); also lock when waking from sleep
+w kscreenlockerrc --group Daemon --key Autolock --type bool true
+w kscreenlockerrc --group Daemon --key Timeout 60
+w kscreenlockerrc --group Daemon --key LockOnResume --type bool true
 
 # one password store for both sessions: gnome-keyring (started by autostart), KWallet off
 w kwalletrc --group Wallet --key Enabled --type bool false

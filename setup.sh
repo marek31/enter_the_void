@@ -260,6 +260,7 @@ EOF
     # Plasma's own plasma.desktop starts without a session bus (systemd would provide one)
     put 755 /usr/local/bin/plasma-void-session < "$FILES/plasma-void-session"
     put 755 /usr/local/bin/plasma-noctalia-colors < "$FILES/plasma-noctalia-colors"
+    tpl "$FILES/plasma-void-config" | put 755 /usr/local/bin/plasma-void-config
     put 644 /usr/local/share/wayland-sessions/plasma-void.desktop <<'EOF'
 [Desktop Entry]
 Name=Plasma (Void)

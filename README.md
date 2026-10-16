@@ -161,8 +161,23 @@ sudo ~/enter_void/setup.sh apps    # update Helium, Floorp, Resilio, fonts, Noct
 
 Updates need no repo: `xu` for packages, cron for the upstream apps. `~/enter_void/refresh.sh` is only for taking changes
 made to this repo onto a running system (VM or laptop, dual boot makes no difference). It replaces every dotfile that differs from the repo,
-including your own edits to niri/foot/fish configs and anything changed in Plasma's System Settings (old files go to `~/.backup`;
-Noctalia's Settings live in `~/.local/state` and are kept), so skip it if you have tuned things by hand.
+including your own edits to niri/foot/fish configs (old files go to `~/.backup`; Noctalia's Settings live in `~/.local/state`
+and Plasma's System Settings are merged, not replaced, so both are kept), so skip it if you have edited those files by hand.
+
+### When a refresh breaks something
+
+Every `refresh.sh` run takes snapper snapshots of `/` and `/home` before it changes anything (`snapper -c home list` shows them as `refresh.sh` pre/post pairs). Easiest first:
+
+1. **Undo the last run:** `~/enter_void/refresh.sh undo`. Reverts everything that run changed in your home (dotfiles, the repo checkout) plus `/usr/local` (Noctalia, scripts) and `/etc/greetd` (login screen), then restarts Noctalia. Run it again to go one more run back.
+   No desktop? Ctrl+Alt+F2 gives a text login; run it there, then Ctrl+Alt+F7 back to the login screen.
+2. **One file only:** each replaced dotfile is also in `~/.backup/<name> <date>`, e.g.
+   `ls -t ~/.backup | head` then `cp ~/.backup/"config.kdl 2026-10-16 21-45-00" ~/.config/niri/config.kdl`.
+   To see what a run changed: `snapper -c home status PRE..POST` (numbers from `snapper -c home list`).
+3. **The system itself is broken** (a package update, or it no longer boots): in the grub menu pick the snapshots entry
+   and boot the `refresh.sh` pre snapshot (read-only, to check), then make it permanent with `sudo snapper-rollback N` and reboot.
+   If the run also updated the kernel, pick the previous kernel under "Advanced options" in grub.
+
+`refresh.sh undo` leaves installed packages as they are; only step 3 takes packages back.
 
 `setup.sh` can be re-run any time, whole or per step: `base packages user security snapper login desktop apps devtools kernel finish`.
 Logs: `/var/log/enter_void/`.
@@ -174,7 +189,7 @@ Logs: `/var/log/enter_void/`.
 | `config.sh` | every decision: host, user, locale, keyboard, disk, snapshot policy, ports |
 | `packages.txt` | everything installed with xbps |
 | `install.sh` | live ISO -> partitions, LUKS, btrfs subvolumes, bootstrap, grub |
-| `refresh.sh` | on the running desktop: `git pull` + take the repo's dotfiles (old ones to `~/.backup`) + restart Noctalia |
+| `refresh.sh` | on the running desktop: snapshots, `git pull` + take the repo's dotfiles (old ones to `~/.backup`) + restart Noctalia; `refresh.sh undo` reverts the last run |
 | `resume.sh` | live ISO -> re-enter the installed system and run setup.sh steps (after a failed install, or to repair) |
 | `setup.sh` | system config, services, hardening, snapper, desktop, upstream apps |
 | `files/` | configs copied to `/etc` and the home folder (dotfiles never overwrite your edits) |

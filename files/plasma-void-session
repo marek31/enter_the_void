@@ -5,4 +5,6 @@ export XDG_SESSION_TYPE=wayland
 logdir=${XDG_STATE_HOME:-$HOME/.local/state}/plasma
 mkdir -p "$logdir"
 find "$logdir" -name '*-plasma.log' -mtime +14 -delete 2>/dev/null
-exec dbus-run-session startplasma-wayland >>"$logdir/$(date +%F)-plasma.log" 2>&1
+log=$logdir/$(date +%F)-plasma.log
+plasma-void-config >>"$log" 2>&1 || echo "plasma-void-config failed" >>"$log"   # look + shortcuts, once per version
+exec dbus-run-session startplasma-wayland >>"$log" 2>&1

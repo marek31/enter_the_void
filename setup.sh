@@ -340,13 +340,17 @@ make_wallpapers() {
     as_user mkdir -p "$UHOME/Pictures/Wallpapers"
     for n in niri plasma; do
         out=$UHOME/Pictures/Wallpapers/keys-$n.png
-        tmp=$(mktemp --suffix=.png)
-        if typst compile --format png --ppi 216 "$FILES/wallpaper/keys-$n.typ" "$tmp"; then
-            install -o "$USERNAME" -g "$USERNAME" -m 644 "$tmp" "$out.tmp" && mv -f "$out.tmp" "$out"
+        tmp=$(mktemp -d)
+        # typst does not look in /usr/local/share/fonts (JetBrains Mono, Cascadia from font_zip); without it a wider
+        # fallback mono font pushes text onto a second page. {p}: a spilled page is reported, page 1 still used.
+        if typst compile --font-path /usr/local/share/fonts --format png --ppi 216 \
+            "$FILES/wallpaper/keys-$n.typ" "$tmp/page{p}.png" && [[ -f $tmp/page1.png ]]; then
+            [[ -f $tmp/page2.png ]] && warn "keys-$n.typ runs onto a second page - lower size in it; page 1 used"
+            install -o "$USERNAME" -g "$USERNAME" -m 644 "$tmp/page1.png" "$out.tmp" && mv -f "$out.tmp" "$out"
         else
-            warn "keys-$n.typ did not render (a second page means the text is too big: lower size in it)"
+            warn "keys-$n.typ did not render"
         fi
-        rm -f "$tmp"
+        rm -rf "$tmp"
     done
 }
 

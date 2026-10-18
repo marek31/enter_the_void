@@ -49,7 +49,7 @@ Don't use `void-installer` from the ISO; install.sh partitions, encrypts and ins
 | `free` (recommended on the X1) | Windows stays | Windows' EFI partition shared (≥16 MB free needed, nothing formatted) + new 1 GiB `/boot` (ext4) + new Void partition with the rest of the gap |
 | `wipe` | blank disk, VM, Linux only | GPT: 1 GiB EFI + 1 GiB `/boot` + the rest for Void |
 
-In both modes the Void partition is btrfs, **not encrypted** by default (boots without a passphrase):
+In both modes the Void partition is btrfs, **encrypted** by default (LUKS2, see below):
 subvolumes `@` `/`, `@home`, `@snapshots`, `@var_log`, `@var_cache`, `@var_tmp`, `@swap` (16 GiB swapfile, used for hibernation).
 With `ENCRYPT=yes` the btrfs sits inside LUKS2 (argon2id, passphrase asked once at boot, ~2 s); `/boot` stays unencrypted either way.
 This layout is fixed after install; changing it (encryption included) means reinstalling.
@@ -59,7 +59,7 @@ Settings worth a look in [config.sh](config.sh) before running it:
 | Setting | Default | Change when |
 |---|---|---|
 | `INSTALL_MODE` / `DISK` | ask | you want no questions |
-| `ENCRYPT` | `no` | `yes` if the laptop leaves the house: without it a stolen disk is readable by anyone |
+| `ENCRYPT` | `yes` | `no` only for a VM or a desk machine: without it a stolen disk is readable by anyone |
 | `SWAP_GIB` | `16` (= RAM) | less RAM; below RAM size hibernation can fail |
 | `BOOT_MIB` | `1024` | keep: 3-4 kernels + initramfs fit |
 | `LUKS_ITER_MS` | `2000` | lower = faster unlock, weaker against passphrase guessing |
@@ -99,6 +99,7 @@ If Windows ever boots straight to itself after an update, pick Void with F12 or 
 | Wallpapers | drop images into `~/Pictures/Wallpapers` |
 | Look | Super+, -> Theme: pick another palette, or "wallpaper" to derive colours from the wallpaper; every app follows |
 | BORE kernel | built automatically after the first boot when on AC (about an hour), or now: `sudo ~/enter_void/setup.sh kernel`; check with `uname -r` (ends in `-bore`) |
+| GitHub (git push) | `gh auth login` (GitHub.com > HTTPS > Login with a web browser), then `gh auth setup-git` so git uses gh's token; the token lives in gnome-keyring (like Git Credential Manager on Windows). `refresh.sh` reminds you until it's done. No `core.longpaths` needed on Linux |
 | Dev tools | `claude`, `agy` (Antigravity CLI), `omp` (oh-my-pi), `deno`, `cargo`/`rustup`, `go`, `sbcl` (Common Lisp) - log in to each on first run |
 | Speakers | EasyEffects with Lenovo's Dolby tuning for this X1, made from the Windows driver: `sudo ~/enter_void/setup.sh speakers` once after the first login (needs a readable Windows partition: with BitLocker on, even suspended, C: is still encrypted and the step is skipped) |
 | Interactive Brokers TWS | Linux build from IBKR (bundled Java, installs into your home, no sudo): download [tws-latest-standalone-linux-x64.sh](https://download2.interactivebrokers.com/installers/tws/latest-standalone/tws-latest-standalone-linux-x64.sh) (or [stable](https://download2.interactivebrokers.com/installers/tws/stable-standalone/tws-stable-standalone-linux-x64.sh)), then `sh ~/Downloads/tws-*-linux-x64.sh`. It runs through XWayland; niri sets `_JAVA_AWT_WM_NONREPARENTING=1` so its windows are not blank |

@@ -74,4 +74,8 @@ sudo ./setup.sh packages security apps login devtools speakers dotfiles
 # bar changes made in Settings (Mod+Comma) win over the repo's config.toml
 grep -Eqs '^\[(bar|widget)' ~/.local/state/noctalia/settings.toml &&
     echo "note: ~/.local/state/noctalia/settings.toml overrides the bar; remove its [bar...]/[widget...] sections to get the repo look"
+# GitHub login is interactive (browser), so it can't be scripted: remind until it's done
+if ! gh auth status >/dev/null 2>&1 || ! git config --global --get credential.https://github.com.helper >/dev/null; then
+    echo "note: git can't push to GitHub yet - run once: gh auth login (GitHub.com > HTTPS > Login with a web browser), then: gh auth setup-git"
+fi
 restart_noctalia

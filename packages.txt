@@ -69,7 +69,7 @@ udisks2 ntfs-3g exfatprogs dosfstools cifs-utils nfs-utils
 # xournalpp (annotate / handwrite / sign), pdfarranger (merge, split, rotate pages), poppler-utils + qpdf (CLI)
 # Markdown: ghostwriter (editor + live preview, default for .md), glow (terminal); okular also renders .md
 okular zathura zathura-pdf-mupdf sioyek xournalpp pdfarranger poppler-utils qpdf ghostwriter glow
-geeqie qimgv imv mpv vlc gimp kolourpaint krita audacity ffmpeg yt-dlp
+geeqie qimgv imv mpv vlc strawberry gimp kolourpaint krita audacity ffmpeg yt-dlp
 gst-plugins-good1 gst-plugins-bad1 gst-plugins-ugly1 gst-libav
 Signal-Desktop remmina kdeconnect snapshot gpu-screen-recorder qbittorrent calibre kate qalculate-qt fsearch qdirstat gparted
 meld kdiff3 krename ncmpcpp keepassxc restic rclone

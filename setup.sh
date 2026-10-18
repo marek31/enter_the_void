@@ -149,6 +149,11 @@ step_security() {
     cmdline_set apparmor 1
     cmdline_set security apparmor
     cmdline_set zswap.enabled 0          # swap is a plain swapfile, no RAM compression
+    # Power optimization: force ASPM, i915 PSR & FBC, NVMe noacpi for deep package C-states (PC8/PC10)
+    cmdline_set pcie_aspm force
+    cmdline_set i915.enable_psr 1
+    cmdline_set i915.enable_fbc 1
+    cmdline_set nvme.noacpi 1
     if [[ -f /swap/swapfile ]]; then     # hibernate into the swapfile (encrypted only with ENCRYPT=yes)
         cmdline_set resume "UUID=$(findmnt -no UUID -T /swap/swapfile)"
         cmdline_set resume_offset "$(btrfs inspect-internal map-swapfile -r /swap/swapfile)"
@@ -421,6 +426,16 @@ EOF
     ln -sf /usr/share/alsa/alsa.conf.d/99-pipewire-default.conf /etc/alsa/conf.d/
 
     put 644 /etc/tlp.d/10-x1.conf < "$FILES/tlp.conf"
+    if ! grep -q "powertop --auto-tune" /etc/rc.local 2>/dev/null; then
+        cat >> /etc/rc.local <<'EOF'
+
+# Power optimization: apply powertop auto-tune on boot
+if [ -x /usr/sbin/powertop ]; then
+    /usr/sbin/powertop --auto-tune
+fi
+EOF
+        chmod +x /etc/rc.local
+    fi
     # .local hostnames (printers, scanners) through avahi
     grep -q mdns_minimal /etc/nsswitch.conf ||
         sed -i 's/^hosts:.*files/& mdns_minimal [NOTFOUND=return]/' /etc/nsswitch.conf
@@ -430,9 +445,13 @@ EOF
         sed -i -E 's/^(BrowseRemoteProtocols|CreateIPPPrinterQueues)\b/#&/' /etc/cups/cups-browsed.conf
         printf '%s\n' '# enter_void' 'BrowseRemoteProtocols dnssd' 'CreateIPPPrinterQueues All' >> /etc/cups/cups-browsed.conf
     fi
-    # bluetooth: power on at boot, report headset battery level to Noctalia
+    # bluetooth: power on at boot, report headset battery level to Noctalia, auto-reconnect HID (mice)
     sed -i -E -e 's/^#?\s*AutoEnable\s*=.*/AutoEnable = true/' \
-        -e 's/^#?\s*Experimental\s*=.*/Experimental = true/' /etc/bluetooth/main.conf
+        -e 's/^#?\s*Experimental\s*=.*/Experimental = true/' \
+        -e 's|^#?\s*ReconnectAttempts\s*=.*|ReconnectAttempts = 7|' \
+        -e 's|^#?\s*ReconnectIntervals\s*=.*|ReconnectIntervals = 1, 2, 4, 8, 16, 32, 64|' \
+        -e 's|^#?\s*ReconnectUUIDs\s*=.*|ReconnectUUIDs = 00001124-0000-1000-8000-00805f9b34fb, 00001112-0000-1000-8000-00805f9b34fb, 0000111f-0000-1000-8000-00805f9b34fb, 0000110a-0000-1000-8000-00805f9b34fb, 0000110b-0000-1000-8000-00805f9b34fb|' \
+        /etc/bluetooth/main.conf
 
     put 644 /etc/fonts/local.conf < "$FILES/fonts-local.conf"
     ln -sf /usr/share/fontconfig/conf.avail/70-no-bitmaps.conf /etc/fonts/conf.d/

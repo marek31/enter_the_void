@@ -201,4 +201,7 @@ setup.sh steps: base (host, tz, locale, console), packages, user (groups, sudo, 
 - 2026-10-16: niri sets `_JAVA_AWT_WM_NONREPARENTING=1` (IBKR TWS); README: wifi check on the live stick before touching the disk, TWS install, refresh.sh scope, BitLocker blocks the speakers step.
 - 2026-10-16: KDE Plasma 6 as a second session (tuigreet F3), minimal look matching niri: left panel, no borders, no animations, Noctalia palette, shared keyring, niri-like shortcuts. refresh.sh restarts Noctalia only in niri.
 - 2026-10-18: disk encryption on by default again (`ENCRYPT=yes`, LUKS2 argon2id, passphrase once at boot): the X1 leaves the house.
+- 2026-10-18: strawberry (Qt6 music collection player & library manager, bit-perfect playback, MPRIS integration) added to packages and set as default audio handler in mimeapps.list (replacing mpv for audio files).
+- 2026-10-19: power optimization for 2-3W idle: TLP ASPM powersupersave on battery, clear RUNTIME_PM_DRIVER_DENYLIST so xhci_hcd autosuspends, allow btusb autosuspend; powertop --auto-tune in rc.local; kernel cmdline: pcie_aspm=force, i915.enable_psr=1, i915.enable_fbc=1, nvme.noacpi=1 for deep Package C-states (C8/C10); disable aggressive background polling services (cups-browsed, ipp-usb, smartd).
 - 2026-10-15: README install guide: ISO choice + checksum, Rufus DD mode, Windows prep (BitLocker, Fast Startup, shrink C:), BIOS, partition modes and config.sh options.
+
